@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+
+  /* Premium Chocolate Palette */
+  --color-chocolate-50: #F7F5F3;
+  --color-chocolate-100: #EADFD8;
+  --color-chocolate-200: #D8C2B7;
+  --color-chocolate-300: #C29F91;
+  --color-chocolate-400: #A87B6B;
+  --color-chocolate-500: #8D5A48;
+  --color-chocolate-600: #714335;
+  --color-chocolate-700: #573328;
+  --color-chocolate-800: #3E241C;
+  --color-chocolate-900: #2A1812;
+  --color-chocolate-950: #1B0F0B;
+
+  /* Luxurious Gold Palette */
+  --color-gold-100: #F9F1D8;
+  --color-gold-200: #F0E0AA;
+  --color-gold-300: #E6CE78;
+  --color-gold-400: #DBC055;
+  --color-gold-500: #C6A633;
+  /* Base Gold */
+  --color-gold-600: #9F8323;
+  --color-gold-700: #7A6218;
+
+  --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-slide-in: slide-in 0.3s ease-out forwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(198, 166, 51, 0.4);
+  }
+
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 20px 5px rgba(198, 166, 51, 0.2);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+:root {
+  --background: #1B0F0B;
+  --foreground: #F7F5F3;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(198, 166, 51, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(113, 67, 53, 0.15), transparent 40%);
+}
+
+.glass {
+  background: rgba(42, 24, 18, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #F0E0AA 0%, #C6A633 50%, #7A6218 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.border-gold-gradient {
+  border-image: linear-gradient(135deg, #F0E0AA, #C6A633) 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2A1812;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #573328;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C6A633;
+}
+
+/* Admin Dashboard Specific Styles */
+.admin-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-card-hover:hover {
+  transform: translateY(-4px);
+}
+
+/* Smooth transitions for interactive elements */
+button, a {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Focus states for accessibility */
+button:focus-visible, a:focus-visible {
+  outline: 2px solid #C6A633;
+  outline-offset: 2px;
+}
