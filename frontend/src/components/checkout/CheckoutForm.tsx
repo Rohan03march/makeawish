@@ -302,7 +302,7 @@ export function CheckoutForm() {
             <Button
                 type="submit"
                 className="w-full bg-gold-500 text-chocolate-950 hover:bg-gold-600 font-bold h-12 text-lg"
-                disabled={isSubmitting || items.length === 0}
+                disabled={isSubmitting || (items || []).length === 0}
             >
                 {isSubmitting ? (
                     <>

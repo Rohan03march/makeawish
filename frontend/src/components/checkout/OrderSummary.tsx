@@ -6,11 +6,11 @@ import Image from "next/image"
 import { Minus, Plus, Trash2 } from "lucide-react"
 
 export function OrderSummary() {
-    const { items, cartTotal, updateQuantity, removeItem } = useCart()
+    const { items, totalPrice, updateQty, removeFromCart } = useCart()
     const shipping: number = 0 // Explicit type
-    const total = cartTotal + shipping
+    const total = totalPrice + shipping
 
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
         return (
             <div className="bg-chocolate-900/50 p-6 rounded-lg border border-white/10">
                 <p className="text-chocolate-200">Your cart is empty.</p>
@@ -24,7 +24,7 @@ export function OrderSummary() {
 
             <div className="space-y-4">
                 {items.map((item) => (
-                    <div key={item.id} className="flex gap-4 group">
+                    <div key={item._id} className="flex gap-4 group">
                         <div className="h-20 w-20 relative shrink-0 rounded-md bg-chocolate-800 flex items-center justify-center text-2xl border border-white/5 overflow-hidden">
                             {/* Fallback to emoji if no image url or just text */}
                             {item.image.startsWith('http') || item.image.startsWith('/') ? (
@@ -37,7 +37,7 @@ export function OrderSummary() {
                             <div className="flex justify-between items-start">
                                 <h3 className="text-sm font-medium text-white line-clamp-2 pr-2">{item.name}</h3>
                                 <button
-                                    onClick={() => removeItem(item.id)}
+                                    onClick={() => removeFromCart(item._id)}
                                     className="text-chocolate-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                                     aria-label="Remove item"
                                 >
@@ -48,22 +48,22 @@ export function OrderSummary() {
                             <div className="flex justify-between items-end mt-2">
                                 <div className="flex items-center gap-2 bg-chocolate-950/50 rounded-lg p-1 border border-white/10">
                                     <button
-                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                        onClick={() => updateQty(item._id, item.qty - 1)}
                                         className="p-1 rounded hover:bg-white/10 text-chocolate-200 hover:text-white transition-colors"
                                         type="button"
                                     >
                                         <Minus className="h-3 w-3" />
                                     </button>
-                                    <span className="text-xs w-4 text-center text-white font-medium">{item.quantity}</span>
+                                    <span className="text-xs w-4 text-center text-white font-medium">{item.qty}</span>
                                     <button
-                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                        onClick={() => updateQty(item._id, item.qty + 1)}
                                         className="p-1 rounded hover:bg-white/10 text-chocolate-200 hover:text-white transition-colors"
                                         type="button"
                                     >
                                         <Plus className="h-3 w-3" />
                                     </button>
                                 </div>
-                                <p className="text-sm text-gold-400 font-bold">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                <p className="text-sm text-gold-400 font-bold">₹{(item.price * item.qty).toLocaleString()}</p>
                             </div>
                         </div>
                     </div>
@@ -75,7 +75,7 @@ export function OrderSummary() {
             <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-chocolate-200">
                     <span>Subtotal</span>
-                    <span>₹{cartTotal.toLocaleString()}</span>
+                    <span>₹{totalPrice.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-chocolate-200">
                     <span>Shipping</span>

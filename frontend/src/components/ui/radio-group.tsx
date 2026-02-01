@@ -68,17 +68,17 @@ const RadioGroupItem = React.forwardRef<
             {...props}
         >
             {isChecked && (
-                <divWrapper>
+                <DivWrapper>
                     <Circle className="h-2.5 w-2.5 fill-current text-current" />
-                </divWrapper>
+                </DivWrapper>
             )}
         </button>
     )
 })
 
-// Wrapper to avoid Lucide warning about string refs if any (though Circle is functional) based on recent Next.js/React versions quirks, 
+// Wrapper to avoid Lucide warning about string refs if any (though Circle is functional) based on recent Next.js/React versions quirks,
 // usually not strictly needed but good for safety. simpler is just direct render.
-const divWrapper = ({ children }: { children: React.ReactNode }) => <>{children}</>
+const DivWrapper = ({ children }: { children: React.ReactNode }) => <>{children}</>
 
 RadioGroupItem.displayName = "RadioGroupItem"
 
