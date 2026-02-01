@@ -178,7 +178,7 @@ export default function ProductPage() {
                         </div>
 
                         <div className="prose prose-lg prose-invert text-chocolate-200 leading-relaxed">
-                            <p>{product.description}</p>
+                            <p className="whitespace-pre-wrap">{product.description}</p>
                         </div>
 
                         {/* Quantity & Add */}
@@ -230,7 +230,7 @@ export default function ProductPage() {
 
                         <div className="pt-6 border-t border-white/10">
                             <h3 className="font-serif font-bold text-gold-400 mb-2 uppercase tracking-widest text-sm">Ingredients</h3>
-                            <p className="text-sm text-chocolate-400 leading-relaxed">{product.ingredients}</p>
+                            <p className="text-sm text-chocolate-400 leading-relaxed whitespace-pre-wrap">{product.ingredients}</p>
                         </div>
                     </div>
                 </div>
