@@ -76,7 +76,7 @@ export default function BuilderPage() {
         text: '',
     })
 
-    const { addItem } = useCart()
+    const { addToCart } = useCart()
 
     const calculateTotal = () => {
         let total = 0
@@ -102,13 +102,20 @@ export default function BuilderPage() {
     const handleAddToCart = () => {
         if (!selections.base || !selections.filling || !selections.shape) return
 
-        addItem({
-            id: `custom-${Date.now()}`,
+        addToCart({
+            _id: `custom-${Date.now()}`,
             name: `Custom ${selections.base.name}`,
             price: calculateTotal(),
-            quantity: 1,
-            image: selections.shape.image || '', // Fallback or handle icon separately if needed
-        })
+            qty: 1,
+            countInStock: 100, // Custom items are always available
+            image: selections.shape.image || baseImage(selections.base.id),
+        }, 1)
+    }
+
+    // Helper for fallback images based on base if shape has no image
+    const baseImage = (baseId: string) => {
+        const base = BASES.find(b => b.id === baseId)
+        return base ? base.image : '/placeholder.png'
     }
 
     const renderStep = () => {
