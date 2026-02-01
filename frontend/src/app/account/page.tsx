@@ -475,8 +475,8 @@ export default function AccountPage() {
                                                 <p className="text-sm text-gold-400 font-bold mt-1">₹{order.totalPrice.toLocaleString()}</p>
                                             </div>
                                             <div>
-                                                {/* Cancel Button - Only show if processing */}
-                                                {(order.status === 'Processing' || (!order.status && !order.isDelivered)) && (
+                                                {/* Cancel Button - Only show if Placed */}
+                                                {(order.status === 'Placed') && (
                                                     <Button
                                                         variant="outline"
                                                         size="sm"

@@ -156,10 +156,9 @@ const cancelOrder = async (req, res) => {
                 return res.status(401).json({ message: 'Not authorized to cancel this order' });
             }
 
-            // Allow cancellation if status is Processing, even if isDelivered check fails (legacy data fix)
-            // Block only if explicitly Shipped or Delivered in status, OR (isDelivered AND status is not Processing)
-            if (order.status === 'Shipped' || order.status === 'Delivered') {
-                return res.status(400).json({ message: 'Cannot cancel order that is already shipped or delivered' });
+            // Allow cancellation ONLY if status is 'Placed'
+            if (order.status !== 'Placed') {
+                return res.status(400).json({ message: 'Cannot cancel order that has already been processed' });
             }
 
             order.status = 'Cancelled';
