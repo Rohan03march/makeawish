@@ -91,7 +91,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
     const removeImage = (index: number) => {
         setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index)
+            images: prev.images.filter((_: string, i: number) => i !== index)
         }))
     }
 
