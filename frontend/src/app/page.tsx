@@ -326,7 +326,7 @@ export default function Home() {
         <div className="container px-4 md:px-6">
           <Quote className="h-12 w-12 mx-auto text-gold-500 mb-8 opacity-50" />
           <h3 className="text-3xl md:text-5xl font-serif font-medium leading-tight max-w-4xl mx-auto mb-10">
-            “I've tasted chocolates from all over the world, but nothing compares to the complexity and texture of Luxe. A truly transcendental experience.”
+            “I've tasted chocolates from all over the world, but nothing compares to the complexity and texture of Make a wish. A truly transcendental experience.”
           </h3>
           <div className="flex items-center justify-center gap-4">
             <div className="h-12 w-12 bg-gray-200 rounded-full overflow-hidden relative">

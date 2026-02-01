@@ -8,12 +8,47 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 
+import { useRouter } from "next/navigation"
+import * as React from "react"
+import { AlertCircle, Loader2, Eye, EyeOff } from "lucide-react"
+import { API_URL } from "@/lib/config"
+
 export default function LoginPage() {
     const { register, handleSubmit } = useForm()
 
-    const onSubmit = (data: any) => {
-        console.log(data)
-        window.location.href = '/'
+    const [error, setError] = React.useState("")
+    const [isLoading, setIsLoading] = React.useState(false)
+    const [showPassword, setShowPassword] = React.useState(false)
+    const router = useRouter()
+
+    const onSubmit = async (data: any) => {
+        setIsLoading(true)
+        setError("")
+        try {
+            const res = await fetch(`${API_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            const result = await res.json()
+
+            if (!res.ok) throw new Error(result.message || 'Login failed')
+
+            // Store Auth Data
+            localStorage.setItem('userInfo', JSON.stringify(result))
+
+            // Redirect based on role
+            // Since we only allow login if approved, we can assume access is granted.
+            if (result.isAdmin) {
+                window.location.href = '/admin/dashboard' // Corrected redirect for admin
+            } else {
+                window.location.href = '/shop'
+            }
+        } catch (err: any) {
+            setError(err.message)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -54,6 +89,13 @@ export default function LoginPage() {
                         <p className="text-chocolate-500">Sign in to access your curated collection.</p>
                     </div>
 
+                    {error && (
+                        <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-100">
+                            <AlertCircle className="w-4 h-4" />
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-chocolate-900">Email Address</label>
@@ -69,16 +111,29 @@ export default function LoginPage() {
                                 <label className="text-sm font-medium text-chocolate-900">Password</label>
                                 <Link href="#" className="text-xs text-gold-600 hover:underline">Forgot password?</Link>
                             </div>
-                            <Input
-                                {...register("password")}
-                                type="password"
-                                className="h-12 bg-white border-chocolate-200 text-chocolate-900 focus-visible:ring-gold-500"
-                                placeholder="••••••••"
-                            />
+                            <div className="relative">
+                                <Input
+                                    {...register("password")}
+                                    type={showPassword ? "text" : "password"}
+                                    className="h-12 bg-white border-chocolate-200 text-chocolate-900 focus-visible:ring-gold-500 pr-10"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-chocolate-400 hover:text-chocolate-600 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <Eye className="h-5 w-5" />
+                                    ) : (
+                                        <EyeOff className="h-5 w-5" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
-                        <Button className="w-full h-12 bg-chocolate-900 text-white hover:bg-gold-500 hover:text-chocolate-950 font-bold transition-all shadow-lg text-lg">
-                            Sign In
+                        <Button disabled={isLoading} className="w-full h-12 bg-chocolate-900 text-white hover:bg-gold-500 hover:text-chocolate-950 font-bold transition-all shadow-lg text-lg">
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
                         </Button>
 
                         <div className="text-center text-sm text-chocolate-500 pt-4">

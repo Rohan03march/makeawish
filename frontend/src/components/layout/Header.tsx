@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ShoppingBag, User, Search, Menu, X } from "lucide-react"
+import { ShoppingBag, User, Search, Menu, X, LogOut, Package, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -21,16 +21,29 @@ import { useCart } from "@/context/CartContext"
 export function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
+    const [userInfo, setUserInfo] = React.useState<any>(null)
     const pathname = usePathname()
     const { cartCount, setIsCartOpen } = useCart()
 
     React.useEffect(() => {
+        // user login check
+        const user = localStorage.getItem('userInfo')
+        if (user) {
+            setUserInfo(JSON.parse(user))
+        }
+
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20)
         }
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
+
+    const handleLogout = () => {
+        localStorage.removeItem('userInfo')
+        setUserInfo(null)
+        window.location.href = '/'
+    }
 
     return (
         <header
@@ -43,9 +56,12 @@ export function Header() {
         >
             <div className="container mx-auto flex items-center justify-between px-4 md:px-6">
                 {/* Logo */}
-                <Link href="/" className="mr-6 flex items-center group">
-                    <span className="text-2xl md:text-3xl font-bold font-serif tracking-tighter text-gold-gradient group-hover:scale-105 transition-transform duration-300">
-                        Luxe Chocolates
+                <Link href="/" className="mr-6 flex flex-col items-center group">
+                    <span className="text-3xl md:text-5xl font-bold font-script tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-600 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] hover:scale-110 transition-transform duration-300">
+                        Make a wish
+                    </span>
+                    <span className="text-[10px] md:text-xs font-serif italic text-gold-400/90 tracking-[0.2em] uppercase mt-0 font-medium">
+                        A box full of love
                     </span>
                 </Link>
 
@@ -72,31 +88,98 @@ export function Header() {
                 </nav>
 
                 {/* Actions */}
-                <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 hidden md:flex transition-colors">
-                        <Search className="h-5 w-5" />
-                        <span className="sr-only">Search</span>
-                    </Button>
-                    <Link href="/login">
-                        <Button variant="ghost" size="icon" className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 transition-colors">
-                            <User className="h-5 w-5" />
-                            <span className="sr-only">Account</span>
-                        </Button>
-                    </Link>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 relative transition-colors"
-                        onClick={() => setIsCartOpen(true)}
-                    >
-                        <ShoppingBag className="h-5 w-5" />
-                        {cartCount > 0 && (
-                            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gold-500 text-[11px] font-bold text-chocolate-950 flex items-center justify-center animate-bounce shadow-lg ring-2 ring-chocolate-950">
-                                {cartCount}
-                            </span>
-                        )}
-                        <span className="sr-only">Cart</span>
-                    </Button>
+                <div className="flex items-center space-x-1 md:space-x-2">
+
+
+                    {userInfo ? (
+                        <>
+                            <div className="relative group hidden lg:block">
+                                <Link href="/account">
+                                    <Button variant="ghost" className="text-sm font-bold text-gold-400 hover:text-gold-300 hover:bg-white/5 transition-colors gap-2">
+                                        <User className="h-4 w-4" />
+                                        Hi, {userInfo.name.split(' ')[0]}
+                                    </Button>
+                                </Link>
+
+                                {/* Dropdown */}
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-[#1B0F0B] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 overflow-hidden">
+                                    <div className="p-2 space-y-1">
+                                        <Link href="/account?tab=profile">
+                                            <div className="flex items-center gap-3 px-4 py-2 text-sm text-chocolate-100 hover:bg-white/5 rounded-lg transition-colors cursor-pointer">
+                                                <User className="h-4 w-4 text-gold-400" />
+                                                My Account
+                                            </div>
+                                        </Link>
+                                        <Link href="/account?tab=orders">
+                                            <div className="flex items-center gap-3 px-4 py-2 text-sm text-chocolate-100 hover:bg-white/5 rounded-lg transition-colors cursor-pointer">
+                                                <Package className="h-4 w-4 text-gold-400" />
+                                                My Orders
+                                            </div>
+                                        </Link>
+                                        <div className="h-px bg-white/10 my-1" />
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer text-left"
+                                        >
+                                            <LogOut className="h-4 w-4" />
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Cart */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 relative transition-colors"
+                                onClick={() => setIsCartOpen(true)}
+                                title="Cart"
+                            >
+                                <ShoppingBag className="h-5 w-5" />
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gold-500 text-[11px] font-bold text-chocolate-950 flex items-center justify-center animate-bounce shadow-lg ring-2 ring-chocolate-950">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </Button>
+
+                            {/* Favorites */}
+                            <Link href="/favorites">
+                                <Button variant="ghost" size="icon" className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 transition-colors" title="Favorites">
+                                    <Heart className="h-5 w-5" />
+                                </Button>
+                            </Link>
+
+
+                        </>
+                    ) : (
+                        <>
+                            {/* Cart (Visible when logged out too) */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 relative transition-colors"
+                                onClick={() => setIsCartOpen(true)}
+                                title="Cart"
+                            >
+                                <ShoppingBag className="h-5 w-5" />
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gold-500 text-[11px] font-bold text-chocolate-950 flex items-center justify-center animate-bounce shadow-lg ring-2 ring-chocolate-950">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </Button>
+
+                            <Link href="/login">
+                                <Button variant="ghost" size="icon" className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 transition-colors">
+                                    <User className="h-5 w-5" />
+                                    <span className="sr-only">Login</span>
+                                </Button>
+                            </Link>
+                        </>
+                    )}
+
                     <Button
                         variant="ghost"
                         size="icon"

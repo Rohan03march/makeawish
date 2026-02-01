@@ -6,7 +6,7 @@ import { Settings as SettingsIcon, Bell, User, Save, Store } from "lucide-react"
 
 export default function SettingsPage() {
     const [generalSettings, setGeneralSettings] = useState({
-        storeName: "Luxe Chocolates",
+        storeName: "Make a wish Chocolates",
         storeEmail: "contact@luxechocolates.com",
         currency: "INR",
         timezone: "Asia/Kolkata"

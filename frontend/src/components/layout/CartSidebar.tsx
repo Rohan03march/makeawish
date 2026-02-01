@@ -10,7 +10,7 @@ import Link from "next/link"
 import Image from "next/image"
 
 export function CartSidebar() {
-    const { isCartOpen, setIsCartOpen, items, updateQuantity, removeItem, cartTotal } = useCart()
+    const { isCartOpen, setIsCartOpen, cartItems, updateQty, removeFromCart, totalPrice } = useCart()
 
     React.useEffect(() => {
         if (isCartOpen) {
@@ -30,7 +30,7 @@ export function CartSidebar() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsCartOpen(false)}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]"
                     />
 
                     {/* Sidebar */}
@@ -39,7 +39,7 @@ export function CartSidebar() {
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="fixed inset-y-0 right-0 w-full sm:w-[450px] bg-chocolate-950 border-l border-white/10 z-50 flex flex-col shadow-2xl"
+                        className="fixed inset-y-0 right-0 w-full sm:w-[450px] bg-[#1B0F0B] border-l border-white/10 z-[100] flex flex-col shadow-2xl"
                     >
                         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-chocolate-900/50">
                             <h2 className="text-2xl font-serif font-bold text-white flex items-center">
@@ -52,7 +52,7 @@ export function CartSidebar() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {items.length === 0 ? (
+                            {cartItems.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
                                     <div className="w-24 h-24 rounded-full bg-chocolate-900/50 flex items-center justify-center">
                                         <ShoppingBag className="h-10 w-10 text-chocolate-400 opacity-50" />
@@ -66,8 +66,8 @@ export function CartSidebar() {
                                     </Button>
                                 </div>
                             ) : (
-                                items.map((item) => (
-                                    <div key={item.id} className="group flex gap-4 bg-chocolate-900/40 p-3 rounded-xl border border-white/5 hover:border-gold-500/30 transition-colors">
+                                cartItems.map((item) => (
+                                    <div key={item._id} className="group flex gap-4 bg-chocolate-900/40 p-3 rounded-xl border border-white/5 hover:border-gold-500/30 transition-colors">
                                         <div className="h-24 w-24 relative shrink-0 rounded-lg bg-chocolate-800 flex items-center justify-center text-3xl border border-white/5 overflow-hidden">
                                             {item.image.startsWith('http') || item.image.startsWith('/') ? (
                                                 <Image
@@ -84,7 +84,7 @@ export function CartSidebar() {
                                             <div className="space-y-1">
                                                 <div className="flex justify-between items-start gap-2">
                                                     <h3 className="font-medium text-white line-clamp-2 leading-tight">{item.name}</h3>
-                                                    <button onClick={() => removeItem(item.id)} className="text-chocolate-400 hover:text-red-400 transition-colors p-1 -mr-2 -mt-2">
+                                                    <button onClick={() => removeFromCart(item._id)} className="text-chocolate-400 hover:text-red-400 transition-colors p-1 -mr-2 -mt-2">
                                                         <X className="h-4 w-4" />
                                                     </button>
                                                 </div>
@@ -94,14 +94,14 @@ export function CartSidebar() {
                                             <div className="flex items-center gap-3 mt-2">
                                                 <div className="flex items-center gap-3 bg-chocolate-950/50 rounded-lg p-1 border border-white/10">
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                        onClick={() => updateQty(item._id, item.qty - 1)}
                                                         className="p-1.5 rounded-md hover:bg-white/10 text-chocolate-200 hover:text-white transition-colors"
                                                     >
                                                         <Minus className="h-3 w-3" />
                                                     </button>
-                                                    <span className="text-sm w-4 text-center text-white font-medium">{item.quantity}</span>
+                                                    <span className="text-sm w-4 text-center text-white font-medium">{item.qty}</span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        onClick={() => updateQty(item._id, item.qty + 1)}
                                                         className="p-1.5 rounded-md hover:bg-white/10 text-chocolate-200 hover:text-white transition-colors"
                                                     >
                                                         <Plus className="h-3 w-3" />
@@ -114,16 +114,16 @@ export function CartSidebar() {
                             )}
                         </div>
 
-                        {items.length > 0 && (
+                        {cartItems.length > 0 && (
                             <div className="p-6 border-t border-white/10 space-y-4 bg-chocolate-900/80 backdrop-blur-lg">
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center text-chocolate-200 text-sm">
                                         <span>Subtotal</span>
-                                        <span>₹{cartTotal.toLocaleString()}</span>
+                                        <span>₹{totalPrice.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-2xl font-serif font-bold text-white">
                                         <span>Total</span>
-                                        <span>₹{cartTotal.toLocaleString()}</span>
+                                        <span>₹{totalPrice.toLocaleString()}</span>
                                     </div>
                                     <p className="text-xs text-chocolate-400 text-center pt-2">Shipping & taxes calculated at checkout</p>
                                 </div>

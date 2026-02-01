@@ -1,29 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, Plus, Edit, Trash2, Package, Filter } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Package, Filter, Loader2 } from "lucide-react"
 import { AddProductModal } from "@/components/admin/AddProductModal"
 import { Pagination } from "@/components/admin/Pagination"
-
-// Mock Products Data
-const MOCK_PRODUCTS = [
-    { id: "PRD-001", name: "Dark Chocolate Truffles", category: "Truffles", price: 1200, stock: 45, image: "/products/truffle.jpg", status: "In Stock" },
-    { id: "PRD-002", name: "Gold Leaf Collection", category: "Gift Boxes", price: 2500, stock: 12, image: "/products/gold.jpg", status: "Low Stock" },
-    { id: "PRD-003", name: "Milk Chocolate Bar", category: "Bars", price: 350, stock: 0, image: "/products/bar.jpg", status: "Out of Stock" },
-    { id: "PRD-004", name: "Hazelnut Pralines", category: "Chocolates", price: 1500, stock: 30, image: "/products/praline.jpg", status: "In Stock" },
-    { id: "PRD-005", name: "Valentine's Special Box", category: "Seasonal", price: 3000, stock: 25, image: "/products/valentine.jpg", status: "In Stock" },
-    { id: "PRD-006", name: "White Chocolate Hearts", category: "Chocolates", price: 800, stock: 8, image: "/products/hearts.jpg", status: "Low Stock" },
-    { id: "PRD-007", name: "Assorted Bonbons", category: "Gift Boxes", price: 1800, stock: 40, image: "/products/bonbons.jpg", status: "In Stock" },
-    { id: "PRD-008", name: "Caramel Delights", category: "Chocolates", price: 950, stock: 35, image: "/products/caramel.jpg", status: "In Stock" },
-    { id: "PRD-009", name: "Premium Dark 70%", category: "Bars", price: 450, stock: 60, image: "/products/dark70.jpg", status: "In Stock" },
-    { id: "PRD-010", name: "Luxury Gift Hamper", category: "Gift Boxes", price: 5000, stock: 5, image: "/products/hamper.jpg", status: "Low Stock" },
-    { id: "PRD-011", name: "Mint Chocolate Thins", category: "Chocolates", price: 600, stock: 50, image: "/products/mint.jpg", status: "In Stock" },
-    { id: "PRD-012", name: "Ruby Chocolate Bar", category: "Bars", price: 550, stock: 28, image: "/products/ruby.jpg", status: "In Stock" },
-]
+import { API_URL } from "@/lib/config"
 
 export default function ProductsPage() {
-    const [products, setProducts] = useState(MOCK_PRODUCTS)
+    const [products, setProducts] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [categoryFilter, setCategoryFilter] = useState("All")
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -31,10 +17,45 @@ export default function ProductsPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
 
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/products`)
+            if (res.ok) {
+                const data = await res.json()
+                // Map API data to UI format if needed, but mostly consistent
+                setProducts(data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch products", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchProducts()
+    }, [])
+
+    const getStatus = (stock: number) => {
+        if (stock === 0) return "Out of Stock"
+        if (stock <= 15) return "Low Stock"
+        return "In Stock"
+    }
+
+    const getStockBadge = (stock: number) => {
+        const status = getStatus(stock)
+        const styles = {
+            "In Stock": "bg-green-500/20 text-green-300 border-green-500/30",
+            "Low Stock": "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+            "Out of Stock": "bg-red-500/20 text-red-300 border-red-500/30"
+        }
+        return styles[status as keyof typeof styles]
+    }
+
     // Filter products
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.id.toLowerCase().includes(searchQuery.toLowerCase())
+            product._id.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesCategory = categoryFilter === "All" || product.category === categoryFilter
         return matchesSearch && matchesCategory
     })
@@ -44,33 +65,86 @@ export default function ProductsPage() {
     const startIndex = (currentPage - 1) * itemsPerPage
     const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
 
-    const handleAddProduct = (product: any) => {
-        if (editProduct) {
-            setProducts(products.map(p => p.id === product.id ? product : p))
-        } else {
-            setProducts([product, ...products])
+    const handleAddProduct = async (productData: any) => {
+        try {
+            const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+            const token = user?.token
+
+            // Map formData 'stock' back to 'countInStock'
+            const payload = {
+                ...productData,
+                countInStock: productData.stock
+            }
+
+            let url = `${API_URL}/api/products`
+            let method = 'POST'
+
+            if (editProduct && (editProduct as any)._id) {
+                url = `${API_URL}/api/products/${(editProduct as any)._id}`
+                method = 'PUT'
+            }
+
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            })
+
+            if (res.ok) {
+                fetchProducts() // Refresh list
+                setEditProduct(null)
+            } else {
+                alert("Failed to save product")
+            }
+        } catch (error) {
+            console.error("Error saving product", error)
         }
-        setEditProduct(null)
     }
 
     const handleEdit = (product: any) => {
-        setEditProduct(product)
+        // Map API data to what Modal expects
+        setEditProduct({
+            ...product,
+            id: product._id,
+            stock: product.countInStock,
+            rating: product.rating || 0,
+            ingredients: product.ingredients || "",
+            images: product.images || (product.image ? [product.image] : [])
+        })
         setIsModalOpen(true)
     }
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm("Are you sure you want to delete this product?")) {
-            setProducts(products.filter(p => p.id !== id))
+            try {
+                const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+                const token = user?.token
+
+                const res = await fetch(`${API_URL}/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+
+                if (res.ok) {
+                    setProducts(products.filter(p => p._id !== id))
+                }
+            } catch (error) {
+                console.error("Error deleting product", error)
+            }
         }
     }
 
-    const getStockBadge = (status: string) => {
-        const styles = {
-            "In Stock": "bg-green-500/20 text-green-300 border-green-500/30",
-            "Low Stock": "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-            "Out of Stock": "bg-red-500/20 text-red-300 border-red-500/30"
-        }
-        return styles[status as keyof typeof styles] || styles["In Stock"]
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
+            </div>
+        )
     }
 
     return (
@@ -97,9 +171,9 @@ export default function ProductsPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
                     { label: "Total Products", value: products.length, icon: Package, color: "gold" },
-                    { label: "In Stock", value: products.filter(p => p.status === "In Stock").length, icon: Package, color: "green" },
-                    { label: "Low Stock", value: products.filter(p => p.status === "Low Stock").length, icon: Package, color: "yellow" },
-                    { label: "Out of Stock", value: products.filter(p => p.status === "Out of Stock").length, icon: Package, color: "red" },
+                    { label: "In Stock", value: products.filter(p => p.countInStock > 15).length, icon: Package, color: "green" },
+                    { label: "Low Stock", value: products.filter(p => p.countInStock <= 15 && p.countInStock > 0).length, icon: Package, color: "yellow" },
+                    { label: "Out of Stock", value: products.filter(p => p.countInStock === 0).length, icon: Package, color: "red" },
                 ].map((stat, i) => {
                     const Icon = stat.icon
                     return (
@@ -170,17 +244,17 @@ export default function ProductsPage() {
                             </thead>
                             <tbody>
                                 {paginatedProducts.map((product) => (
-                                    <tr key={product.id} className="border-b border-white/5 hover:bg-white/5 transition-all group">
-                                        <td className="p-4 text-gold-400 font-mono font-bold">{product.id}</td>
+                                    <tr key={product._id} className="border-b border-white/5 hover:bg-white/5 transition-all group">
+                                        <td className="p-4 text-gold-400 font-mono font-bold text-xs">PRD-{product._id.substring(product._id.length - 6).toUpperCase()}</td>
                                         <td className="p-4">
                                             <p className="text-white font-semibold">{product.name}</p>
                                         </td>
                                         <td className="p-4 text-chocolate-300">{product.category}</td>
                                         <td className="p-4 text-white font-bold">₹{product.price.toLocaleString()}</td>
-                                        <td className="p-4 text-white">{product.stock}</td>
+                                        <td className="p-4 text-white">{product.countInStock}</td>
                                         <td className="p-4">
-                                            <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${getStockBadge(product.status)}`}>
-                                                {product.status}
+                                            <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${getStockBadge(product.countInStock)}`}>
+                                                {getStatus(product.countInStock)}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -193,7 +267,7 @@ export default function ProductsPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(product.id)}
+                                                    onClick={() => handleDelete(product._id)}
                                                     className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
                                                     title="Delete"
                                                 >

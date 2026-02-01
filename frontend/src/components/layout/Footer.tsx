@@ -48,7 +48,7 @@ export function Footer() {
                     {/* Brand */}
                     <div className="col-span-2 md:col-span-4 space-y-6">
                         <Link href="/" className="inline-block">
-                            <span className="font-serif text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-chocolate-900 to-chocolate-700">Luxe.</span>
+                            <span className="font-serif text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-chocolate-900 to-chocolate-700">Make a wish.</span>
                         </Link>
                         <p className="text-chocolate-600/80 text-sm leading-relaxed max-w-xs">
                             Handcrafted in Zurich using ethically sourced cacao. Experience the art of Swiss chocolate making.
@@ -78,25 +78,24 @@ export function Footer() {
                     <div className="col-span-1 md:col-span-2">
                         <h4 className="font-bold mb-6 text-chocolate-950">Company</h4>
                         <ul className="space-y-4 text-sm text-chocolate-600 font-medium">
-                            {['Our Story', 'Sustainability', 'Careers', 'Contact'].map(item => (
-                                <li key={item}><Link href="/about" className="hover:text-gold-600 transition-colors">{item}</Link></li>
-                            ))}
+                            <li><Link href="/about" className="hover:text-gold-600 transition-colors">Our Story</Link></li>
+                            <li><Link href="/contact" className="hover:text-gold-600 transition-colors">Contact</Link></li>
                         </ul>
                     </div>
 
                     <div className="col-span-1 md:col-span-2">
                         <h4 className="font-bold mb-6 text-chocolate-950">Legal</h4>
                         <ul className="space-y-4 text-sm text-chocolate-600 font-medium">
-                            {['Privacy Policy', 'Terms of Service', 'Cookies', 'Imprint'].map(item => (
-                                <li key={item}><Link href="/privacy" className="hover:text-gold-600 transition-colors">{item}</Link></li>
-                            ))}
+                            <li><Link href="/privacy" className="hover:text-gold-600 transition-colors">Privacy Policy</Link></li>
+                            <li><Link href="/terms" className="hover:text-gold-600 transition-colors">Terms of Service</Link></li>
+                            <li><Link href="/return-policy" className="hover:text-gold-600 transition-colors">Return Policy</Link></li>
                         </ul>
                     </div>
                 </div>
 
                 {/* Copyright */}
                 <div className="mt-16 text-center text-xs text-chocolate-400 font-medium uppercase tracking-wider">
-                    &copy; {currentYear} Luxe Chocolates AG. All rights reserved.
+                    &copy; {currentYear} Make a wish. All rights reserved.
                 </div>
             </div>
         </footer>

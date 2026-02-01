@@ -1,24 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, Eye, Edit, Trash2, Download, Filter } from "lucide-react"
+import { Search, Eye, Edit, Trash2, Download, Filter, Loader2 } from "lucide-react"
 import { OrderDetailsModal } from "@/components/admin/OrderDetailsModal"
 import { Pagination } from "@/components/admin/Pagination"
-
-// Mock Orders Data
-const MOCK_ORDERS = Array.from({ length: 45 }, (_, i) => ({
-    id: `ORD-${String(i + 1).padStart(3, '0')}`,
-    customer: ["Alice Freeman", "Josef Miller", "Sarah Smith", "Mike Johnson", "Emma Davis", "John Doe", "Jane Smith"][i % 7],
-    email: ["alice@example.com", "josef@example.com", "sarah@example.com", "mike@example.com", "emma@example.com", "john@example.com", "jane@example.com"][i % 7],
-    items: Math.floor(Math.random() * 5) + 1,
-    total: `₹${(Math.random() * 10000 + 1000).toFixed(0).toLocaleString()}`,
-    status: ["Processing", "Shipped", "Delivered", "Cancelled"][Math.floor(Math.random() * 4)],
-    date: `${Math.floor(Math.random() * 30) + 1} ${["Jan", "Feb", "Mar"][Math.floor(Math.random() * 3)]} 2024`
-}))
+import { API_URL } from "@/lib/config"
 
 export default function OrdersPage() {
-    const [orders, setOrders] = useState(MOCK_ORDERS)
+    const [orders, setOrders] = useState<any[]>([])
+    interface Order {
+        _id: string;
+        user?: { name: string; email: string };
+        orderItems: any[];
+        totalPrice: number;
+        status: string;
+        createdAt: string;
+        paymentResult?: { id: string; status: string; update_time: string; email_address: string };
+    }
+
+    const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState("All")
     const [selectedOrder, setSelectedOrder] = useState(null)
@@ -26,10 +27,43 @@ export default function OrdersPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
+    const fetchOrders = async () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+            const token = user?.token
+
+            const res = await fetch(`${API_URL}/api/orders`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setOrders(data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch orders", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchOrders()
+    }, [])
+
     // Filter orders
-    const filteredOrders = orders.filter(order => {
-        const matchesSearch = order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order.id.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredOrders = orders.filter((order: Order) => {
+        const customerName = order.user?.name || "Unknown"
+        const orderId = order._id.toUpperCase()
+
+        const paymentId = order.paymentResult?.id?.toLowerCase() || ""
+        const formattedOrderId = `ORD-${order._id.slice(-5).toUpperCase()}`
+
+        const matchesSearch = customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            orderId.includes(searchQuery.toUpperCase()) ||
+            formattedOrderId.includes(searchQuery.toUpperCase()) ||
+            paymentId.includes(searchQuery.toLowerCase())
         const matchesStatus = statusFilter === "All" || order.status === statusFilter
         return matchesSearch && matchesStatus
     })
@@ -40,18 +74,60 @@ export default function OrdersPage() {
     const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage)
 
     const handleView = (order: any) => {
-        setSelectedOrder(order)
+        // Map backend order structure to what modal expects if different
+        // Currently modal might expect 'id', 'customer', etc.
+        // We'll pass the full object and let the modal handle or map it briefly here
+        const mappedOrder = {
+            ...order,
+            id: order._id, // Modal might use 'id'
+            customer: order.user?.name,
+            email: order.user?.email,
+            phone: order.shippingAddress?.phone || "N/A",
+            address: order.shippingAddress ? `${order.shippingAddress.address}, ${order.shippingAddress.city} - ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}` : "N/A",
+            items: order.orderItems.map((item: any) => ({
+                ...item,
+                quantity: item.qty
+            })),
+            total: `₹${order.totalPrice.toLocaleString()}`,
+            date: new Date(order.createdAt).toLocaleDateString()
+        }
+        setSelectedOrder(mappedOrder)
         setIsModalOpen(true)
     }
 
     const handleDelete = (id: string) => {
         if (confirm("Are you sure you want to delete this order?")) {
-            setOrders(orders.filter(o => o.id !== id))
+            // Implement delete API call here
+            setOrders(orders.filter((o: Order) => o._id !== id))
         }
     }
 
     const handleExport = () => {
         alert("Exporting orders to CSV...")
+    }
+
+    const updateStatus = async (id: string, newStatus: string) => {
+        try {
+            const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+            const token = user?.token
+
+            const res = await fetch(`${API_URL}/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+
+            if (res.ok) {
+                setOrders(orders.map((o: Order) =>
+                    o._id === id ? { ...o, status: newStatus } : o
+                ))
+            }
+        } catch (error) {
+            console.error("Failed to update status", error)
+        }
     }
 
     const getStatusBadge = (status: string) => {
@@ -66,10 +142,18 @@ export default function OrdersPage() {
 
     const statusCounts = {
         All: orders.length,
-        Processing: orders.filter(o => o.status === "Processing").length,
-        Shipped: orders.filter(o => o.status === "Shipped").length,
-        Delivered: orders.filter(o => o.status === "Delivered").length,
-        Cancelled: orders.filter(o => o.status === "Cancelled").length,
+        Processing: orders.filter((o: Order) => o.status === "Processing").length,
+        Shipped: orders.filter((o: Order) => o.status === "Shipped").length,
+        Delivered: orders.filter((o: Order) => o.status === "Delivered").length,
+        Cancelled: orders.filter((o: Order) => o.status === "Cancelled").length,
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
+            </div>
+        )
     }
 
     return (
@@ -129,6 +213,7 @@ export default function OrdersPage() {
                             <thead>
                                 <tr className="border-b border-white/10 text-chocolate-400 text-sm">
                                     <th className="text-left p-4 font-semibold">Order ID</th>
+                                    <th className="text-left p-4 font-semibold">Payment ID</th>
                                     <th className="text-left p-4 font-semibold">Customer</th>
                                     <th className="text-left p-4 font-semibold">Items</th>
                                     <th className="text-left p-4 font-semibold">Total</th>
@@ -138,17 +223,24 @@ export default function OrdersPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginatedOrders.map((order) => (
-                                    <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-all group">
-                                        <td className="p-4 text-gold-400 font-mono font-bold">{order.id}</td>
+                                {paginatedOrders.map((order: any) => (
+                                    <tr key={order._id} className="border-b border-white/5 hover:bg-white/5 transition-all group">
+                                        <td className="p-4 text-gold-400 font-mono font-bold">ORD-{order._id.substring(order._id.length - 5).toUpperCase()}</td>
+                                        <td className="p-4 font-mono text-xs text-white/70 whitespace-nowrap">
+                                            {order.paymentResult?.id ? (
+                                                <span className="bg-white/5 px-2 py-1 rounded border border-white/10">{order.paymentResult.id}</span>
+                                            ) : (
+                                                <span className="text-white/30">-</span>
+                                            )}
+                                        </td>
                                         <td className="p-4">
                                             <div>
-                                                <p className="text-white font-semibold">{order.customer}</p>
-                                                <p className="text-chocolate-400 text-xs">{order.email}</p>
+                                                <p className="text-white font-semibold">{order.user?.name || "Unknown"}</p>
+                                                <p className="text-chocolate-400 text-xs">{order.user?.email || "No Email"}</p>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-white">{order.items} items</td>
-                                        <td className="p-4 text-white font-bold text-base">{order.total}</td>
+                                        <td className="p-4 text-white">{order.orderItems.length} items</td>
+                                        <td className="p-4 text-white font-bold text-base">₹{order.totalPrice.toLocaleString()}</td>
                                         <td className="p-4">
                                             <span className={`px-3 py-1.5 rounded-full text-xs font-bold border inline-flex items-center gap-1 ${getStatusBadge(order.status)}`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'Delivered' ? 'bg-green-400' :
@@ -158,17 +250,12 @@ export default function OrdersPage() {
                                                 {order.status}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-chocolate-400">{order.date}</td>
+                                        <td className="p-4 text-chocolate-400">{new Date(order.createdAt).toLocaleDateString()}</td>
                                         <td className="p-4">
                                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <select
                                                     value={order.status}
-                                                    onChange={(e) => {
-                                                        const newStatus = e.target.value
-                                                        setOrders(orders.map(o =>
-                                                            o.id === order.id ? { ...o, status: newStatus } : o
-                                                        ))
-                                                    }}
+                                                    onChange={(e) => updateStatus(order._id, e.target.value)}
                                                     className={`px-3 py-2 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 transition-all cursor-pointer border ${order.status === 'Delivered' ? 'bg-green-500/20 text-green-300 border-green-500/30 focus:ring-green-500/50' :
                                                         order.status === 'Shipped' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30 focus:ring-blue-500/50' :
                                                             order.status === 'Cancelled' ? 'bg-red-500/20 text-red-300 border-red-500/30 focus:ring-red-500/50' :
@@ -190,7 +277,7 @@ export default function OrdersPage() {
                                                     <Eye className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(order.id)}
+                                                    onClick={() => handleDelete(order._id)}
                                                     className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
                                                     title="Delete"
                                                 >

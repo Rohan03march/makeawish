@@ -7,8 +7,9 @@ import { Footer } from "@/components/layout/Footer"
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const isAdminRoute = pathname?.startsWith('/admin')
+    const isAuthRoute = pathname === '/login' || pathname === '/signup'
 
-    if (isAdminRoute) {
+    if (isAdminRoute || isAuthRoute) {
         return <>{children}</>
     }
 
@@ -16,7 +17,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <>
             <Header />
             <main className="flex-1 overflow-x-hidden">{children}</main>
-            <Footer />
+            {(!pathname?.startsWith('/order-success')) && <Footer />}
         </>
     )
 }

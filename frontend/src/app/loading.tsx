@@ -9,7 +9,7 @@ export default function Loading() {
 
                 {/* Brand Logo */}
                 <h1 className="relative z-10 text-4xl md:text-5xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-600 tracking-widest animate-pulse">
-                    Luxe.
+                    Make a wish.
                 </h1>
             </div>
 

@@ -37,7 +37,7 @@ export function PageLoader() {
                     }}
                     className="text-gold-500 font-serif text-4xl md:text-6xl font-bold tracking-widest z-10"
                 >
-                    Luxe.
+                    Make a wish.
                 </motion.div>
 
                 {/* Texture Overlay */}

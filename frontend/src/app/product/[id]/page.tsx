@@ -7,53 +7,95 @@ import { useCart } from "@/context/CartContext"
 import { Minus, Plus, Star, Truck, ShieldCheck, Heart, Share2 } from "lucide-react"
 import { motion } from "framer-motion"
 import Image from "next/image"
-
-// Mock Data
-const PRODUCTS = {
-    1: {
-        id: 1,
-        name: "Midnight Hazelnut Truffle",
-        price: 2400,
-        description: "Experience the depth of 70% dark chocolate combined with the crunch of roasted hazelnuts. A perfect balance of bitter and sweet, finished with a dusting of cocoa powder.",
-        ingredients: "Cocoa mass, sugar, cocoa butter, hazelnuts, emulsifier (soy lecithin), natural vanilla flavouring.",
-        images: ["/dark-truffle.png", "/gift-box.png", "/milk-swirl.png"],
-        reviews: 42,
-        rating: 4.8
-    },
-    2: {
-        id: 2,
-        name: "Velvet Caramel Swirl",
-        price: 2750,
-        description: "Silky smooth milk chocolate filled with a gooey salted caramel center. A classic indulgence redefined with premium Swiss cocoa.",
-        ingredients: "Sugar, cocoa butter, whole milk powder, cocoa mass, cream, butter, sea salt.",
-        images: ["/milk-swirl.png", "/dark-truffle.png", "/gift-box.png"],
-        reviews: 35,
-        rating: 4.7
-    },
-    3: {
-        id: 3,
-        name: "Royal Selection Gift Box",
-        price: 7200,
-        description: "The ultimate gesture of luxury. 24 hand-picked truffles, pralines, and ganaches in our signature gold-embossed box.",
-        ingredients: "Various artisan ingredients. Contains nuts, dairy, soy.",
-        images: ["/gift-box.png", "/dark-truffle.png", "/milk-swirl.png"],
-        reviews: 215,
-        rating: 5.0
-    }
-}
+import { API_URL } from "@/lib/config"
 
 export default function ProductPage() {
     const params = useParams()
-    const { addItem } = useCart()
+    const { addToCart } = useCart()
     const [quantity, setQuantity] = React.useState(1)
     const [activeImage, setActiveImage] = React.useState(0)
+    const [product, setProduct] = React.useState<any>(null)
+    const [loading, setLoading] = React.useState(true)
 
-    const productId = params?.id ? Number(params.id) : 1
-    const product = PRODUCTS[productId as keyof typeof PRODUCTS] || PRODUCTS[1]
+    const [isFavorite, setIsFavorite] = React.useState(false)
+
+    React.useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/products/${params?.id}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    // Adapter for compatibility with existing UI
+                    setProduct({
+                        ...data,
+                        id: data._id,
+                        // Use images array if available and non-empty, otherwise fallback to single image wrapped in array
+                        images: (data.images && data.images.length > 0) ? data.images : [data.image || '/images/sample.jpg'],
+                        ingredients: data.ingredients || "No ingredients listed."
+                    })
+                    checkIfFavorite(data._id)
+                }
+            } catch (error) {
+                console.error("Error fetching product", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        if (params?.id) {
+            fetchProduct()
+        }
+    }, [params?.id])
+
+    const checkIfFavorite = async (productId: string) => {
+        const userInfo = localStorage.getItem('userInfo')
+        if (!userInfo) return
+
+        try {
+            const { token } = JSON.parse(userInfo)
+            const res = await fetch(`${API_URL}/api/auth/favorites`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (res.ok) {
+                const favorites = await res.json()
+                setIsFavorite(favorites.some((fav: any) => fav._id === productId || fav === productId))
+            }
+        } catch (error) {
+            console.error("Error checking favorite status:", error)
+        }
+    }
+
+    const toggleFavorite = async () => {
+        const userInfo = localStorage.getItem('userInfo')
+        if (!userInfo) {
+            alert("Please login to manage favorites")
+            return
+        }
+
+        try {
+            const { token } = JSON.parse(userInfo)
+            const res = await fetch(`${API_URL}/api/auth/favorites/${product.id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            if (res.ok) {
+                setIsFavorite(!isFavorite)
+            }
+        } catch (error) {
+            console.error("Error toggling favorite:", error)
+        }
+    }
 
     const handleAddToCart = () => {
-        addItem({ ...product, quantity, image: product.images[0] })
+        if (product) {
+            addToCart({ ...product, qty: quantity }, quantity)
+        }
     }
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-chocolate-950 text-gold-500">Loading...</div>
+
+    if (!product) return <div className="min-h-screen flex items-center justify-center bg-chocolate-950 text-white">Product not found</div>
 
     return (
         <div className="min-h-screen bg-chocolate-950 text-white">
@@ -72,17 +114,31 @@ export default function ProductPage() {
                             <div className="absolute inset-0 bg-gold-500/10 blur-[100px] rounded-full transform scale-75 animate-pulse" />
 
                             <div className="relative z-10 w-4/5 h-4/5">
-                                <Image
-                                    src={product.images[activeImage]}
-                                    alt={product.name}
-                                    fill
-                                    className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform duration-700"
-                                />
+                                {product.images[activeImage].startsWith('http') ? (
+                                    <Image
+                                        src={product.images[activeImage]}
+                                        alt={product.name}
+                                        fill
+                                        className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform duration-700"
+                                    />
+                                ) : (
+                                    <Image
+                                        src={product.images[activeImage]}
+                                        alt={product.name}
+                                        fill
+                                        className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-105 transition-transform duration-700"
+                                    />
+                                )}
                             </div>
 
                             <div className="absolute top-6 right-6 z-20 flex flex-col gap-4">
-                                <Button variant="ghost" size="icon" className="rounded-full bg-white/10 hover:bg-gold-500 hover:text-chocolate-950 backdrop-blur-md transition-all">
-                                    <Heart className="h-6 w-6" />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={toggleFavorite}
+                                    className={`rounded-full bg-white/10 hover:bg-gold-500 hover:text-chocolate-950 backdrop-blur-md transition-all ${isFavorite ? 'text-red-500 hover:text-red-600' : ''}`}
+                                >
+                                    <Heart className={`h-6 w-6 ${isFavorite ? 'fill-current' : ''}`} />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="rounded-full bg-white/10 hover:bg-gold-500 hover:text-chocolate-950 backdrop-blur-md transition-all">
                                     <Share2 className="h-6 w-6" />
@@ -160,7 +216,7 @@ export default function ProductPage() {
                                 <Truck className="h-6 w-6 text-gold-500" />
                                 <div>
                                     <span className="block font-bold text-white">Free Shipping</span>
-                                    <span className="text-xs">On orders over $50</span>
+                                    <span className="text-xs">On orders over ₹1,000</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 bg-chocolate-900/30 p-4 rounded-xl border border-white/5">
