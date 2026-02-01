@@ -19,6 +19,8 @@ export default function ProductPage() {
 
     const [isFavorite, setIsFavorite] = React.useState(false)
 
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = React.useState(false)
+
     React.useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -178,7 +180,17 @@ export default function ProductPage() {
                         </div>
 
                         <div className="prose prose-lg prose-invert text-chocolate-200 leading-relaxed">
-                            <p className="whitespace-pre-wrap">{product.description}</p>
+                            <p className="whitespace-pre-wrap">
+                                {isDescriptionExpanded ? product.description : `${product.description.substring(0, 150)}${product.description.length > 150 ? '...' : ''}`}
+                            </p>
+                            {product.description.length > 150 && (
+                                <button
+                                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                    className="text-gold-500 hover:text-gold-400 font-bold text-sm mt-2 focus:outline-none"
+                                >
+                                    {isDescriptionExpanded ? "View Less" : "View More"}
+                                </button>
+                            )}
                         </div>
 
                         {/* Quantity & Add */}
