@@ -147,7 +147,7 @@ export default function ProductPage() {
                         </motion.div>
 
                         <div className="flex justify-center gap-4 py-2 overflow-x-auto">
-                            {product.images.map((img, idx) => (
+                            {product.images.map((img: string, idx: number) => (
                                 <div
                                     key={idx}
                                     onClick={() => setActiveImage(idx)}
