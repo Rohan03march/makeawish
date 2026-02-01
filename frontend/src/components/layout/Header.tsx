@@ -128,6 +128,13 @@ export function Header() {
                                 </div>
                             </div>
 
+                            {/* Mobile User Icon */}
+                            <Link href="/account" className="lg:hidden">
+                                <Button variant="ghost" size="icon" className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 transition-colors">
+                                    <User className="h-5 w-5" />
+                                </Button>
+                            </Link>
+
                             {/* Cart */}
                             <Button
                                 variant="ghost"
@@ -144,8 +151,8 @@ export function Header() {
                                 )}
                             </Button>
 
-                            {/* Favorites */}
-                            <Link href="/favorites">
+                            {/* Favorites (Desktop Only) */}
+                            <Link href="/favorites" className="hidden lg:flex">
                                 <Button variant="ghost" size="icon" className="text-chocolate-100 hover:text-gold-400 hover:bg-white/5 transition-colors" title="Favorites">
                                     <Heart className="h-5 w-5" />
                                 </Button>
@@ -214,6 +221,20 @@ export function Header() {
                                     {item.name}
                                 </Link>
                             ))}
+                            {/* Mobile Favorites Link */}
+                            {userInfo && (
+                                <Link
+                                    href="/favorites"
+                                    className={cn(
+                                        "block py-3 text-lg font-serif transition-colors hover:text-gold-400 border-b border-white/5 flex items-center gap-2",
+                                        pathname === "/favorites" ? "text-gold-400" : "text-chocolate-100"
+                                    )}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <Heart className="h-5 w-5" />
+                                    Favorites
+                                </Link>
+                            )}
                             <div className="pt-4">
                                 <Button className="w-full bg-gold-500 text-chocolate-950 hover:bg-gold-600 font-bold tracking-wide">
                                     Search Collection
