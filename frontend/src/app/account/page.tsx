@@ -405,12 +405,12 @@ export default function AccountPage() {
                             <div className="space-y-4">
                                 {showAddressForm && (
                                     <form onSubmit={handleAddAddress} className="bg-chocolate-900/50 p-4 rounded-lg border border-gold-500/30 space-y-3 animate-in fade-in zoom-in-95">
-                                        <Input placeholder="Street Address" value={newAddress.street} onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })} className="bg-black/20 border-white/10" required />
+                                        <Input placeholder="Street Address" value={newAddress.street} onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })} className="bg-black/20 border-white/10 text-white" required />
                                         <div className="grid grid-cols-2 gap-3">
-                                            <Input placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} className="bg-black/20 border-white/10" required />
-                                            <Input placeholder="Postal Code" value={newAddress.postalCode} onChange={(e) => setNewAddress({ ...newAddress, postalCode: e.target.value })} className="bg-black/20 border-white/10" required />
+                                            <Input placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} className="bg-black/20 border-white/10 text-white" required />
+                                            <Input placeholder="Postal Code" value={newAddress.postalCode} onChange={(e) => setNewAddress({ ...newAddress, postalCode: e.target.value })} className="bg-black/20 border-white/10 text-white" required />
                                         </div>
-                                        <Input placeholder="Country" value={newAddress.country} onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })} className="bg-black/20 border-white/10" required />
+                                        <Input placeholder="Country" value={newAddress.country} onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })} className="bg-black/20 border-white/10 text-white" required />
                                         <div className="flex justify-end gap-2">
                                             <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddressForm(false)} className="text-chocolate-300">Cancel</Button>
                                             <Button type="submit" size="sm" className="bg-gold-500 text-chocolate-950 font-bold">Save Address</Button>
