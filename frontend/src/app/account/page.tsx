@@ -521,12 +521,13 @@ export default function AccountPage() {
                                                     </div>
                                                 </div>
                                                 <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${order.status === 'Cancelled' ? 'bg-red-500/10 text-red-400' :
-                                                    order.status === 'Processing' ? 'bg-gold-500/10 text-gold-400' :
-                                                        order.status === 'Shipped' ? 'bg-blue-500/10 text-blue-400' :
-                                                            (order.status === 'Delivered' || order.isDelivered) ? 'bg-green-500/10 text-green-400' :
-                                                                'bg-gold-500/10 text-gold-400'
+                                                    order.status === 'Placed' ? 'bg-indigo-500/10 text-indigo-400' :
+                                                        order.status === 'Processing' ? 'bg-gold-500/10 text-gold-400' :
+                                                            order.status === 'Shipped' ? 'bg-blue-500/10 text-blue-400' :
+                                                                (order.status === 'Delivered' || order.isDelivered) ? 'bg-green-500/10 text-green-400' :
+                                                                    'bg-gold-500/10 text-gold-400'
                                                     }`}>
-                                                    {order.status || (order.isDelivered ? 'Delivered' : 'Processing')}
+                                                    {order.status || (order.isDelivered ? 'Delivered' : 'Placed')}
                                                 </span>
                                             </div>
                                         ))}

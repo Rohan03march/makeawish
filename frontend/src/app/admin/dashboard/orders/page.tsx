@@ -132,6 +132,7 @@ export default function OrdersPage() {
 
     const getStatusBadge = (status: string) => {
         const styles = {
+            "Placed": "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
             "Processing": "bg-gold-500/20 text-gold-300 border-gold-500/30",
             "Shipped": "bg-blue-500/20 text-blue-300 border-blue-500/30",
             "Delivered": "bg-green-500/20 text-green-300 border-green-500/30",
@@ -142,6 +143,7 @@ export default function OrdersPage() {
 
     const statusCounts = {
         All: orders.length,
+        Placed: orders.filter((o: Order) => o.status === "Placed").length,
         Processing: orders.filter((o: Order) => o.status === "Processing").length,
         Shipped: orders.filter((o: Order) => o.status === "Shipped").length,
         Delivered: orders.filter((o: Order) => o.status === "Delivered").length,
@@ -245,7 +247,8 @@ export default function OrdersPage() {
                                             <span className={`px-3 py-1.5 rounded-full text-xs font-bold border inline-flex items-center gap-1 ${getStatusBadge(order.status)}`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'Delivered' ? 'bg-green-400' :
                                                     order.status === 'Shipped' ? 'bg-blue-400' :
-                                                        order.status === 'Cancelled' ? 'bg-red-400' : 'bg-gold-400'
+                                                        order.status === 'Placed' ? 'bg-indigo-400' :
+                                                            order.status === 'Cancelled' ? 'bg-red-400' : 'bg-gold-400'
                                                     }`} />
                                                 {order.status}
                                             </span>
@@ -258,12 +261,14 @@ export default function OrdersPage() {
                                                     onChange={(e) => updateStatus(order._id, e.target.value)}
                                                     className={`px-3 py-2 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 transition-all cursor-pointer border ${order.status === 'Delivered' ? 'bg-green-500/20 text-green-300 border-green-500/30 focus:ring-green-500/50' :
                                                         order.status === 'Shipped' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30 focus:ring-blue-500/50' :
-                                                            order.status === 'Cancelled' ? 'bg-red-500/20 text-red-300 border-red-500/30 focus:ring-red-500/50' :
-                                                                'bg-gold-500/20 text-gold-300 border-gold-500/30 focus:ring-gold-500/50'
+                                                            order.status === 'Placed' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 focus:ring-indigo-500/50' :
+                                                                order.status === 'Cancelled' ? 'bg-red-500/20 text-red-300 border-red-500/30 focus:ring-red-500/50' :
+                                                                    'bg-gold-500/20 text-gold-300 border-gold-500/30 focus:ring-gold-500/50'
                                                         }`}
                                                     title="Change Status"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
+                                                    <option value="Placed" className="bg-chocolate-900 text-indigo-300">Placed</option>
                                                     <option value="Processing" className="bg-chocolate-900 text-gold-300">Processing</option>
                                                     <option value="Shipped" className="bg-chocolate-900 text-blue-300">Shipped</option>
                                                     <option value="Delivered" className="bg-chocolate-900 text-green-300">Delivered</option>
