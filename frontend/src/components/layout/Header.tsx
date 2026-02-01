@@ -24,7 +24,7 @@ export function Header() {
     const [isScrolled, setIsScrolled] = React.useState(false)
     const [userInfo, setUserInfo] = React.useState<any>(null)
     const pathname = usePathname()
-    const { cartCount, setIsCartOpen } = useCart()
+    const { cartCount, setIsCartOpen, clearCart } = useCart()
 
     React.useEffect(() => {
         // user login check
@@ -42,6 +42,7 @@ export function Header() {
 
     const handleLogout = () => {
         localStorage.removeItem('userInfo')
+        clearCart()
         setUserInfo(null)
         window.location.href = '/'
     }

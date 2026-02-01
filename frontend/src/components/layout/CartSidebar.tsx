@@ -6,11 +6,12 @@ import { X, Minus, Plus, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/CartContext"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 
 export function CartSidebar() {
     const { isCartOpen, setIsCartOpen, cartItems, updateQty, removeFromCart, totalPrice } = useCart()
+    const router = useRouter()
 
     React.useEffect(() => {
         if (isCartOpen) {
@@ -19,6 +20,16 @@ export function CartSidebar() {
             document.body.style.overflow = 'unset'
         }
     }, [isCartOpen])
+
+    const handleCheckout = () => {
+        setIsCartOpen(false)
+        const user = localStorage.getItem('userInfo')
+        if (!user) {
+            router.push('/login?redirect=checkout')
+        } else {
+            router.push('/checkout')
+        }
+    }
 
     return (
         <AnimatePresence>
@@ -127,11 +138,12 @@ export function CartSidebar() {
                                     </div>
                                     <p className="text-xs text-chocolate-400 text-center pt-2">Shipping & taxes calculated at checkout</p>
                                 </div>
-                                <Link href="/checkout" onClick={() => setIsCartOpen(false)} className="block">
-                                    <Button className="w-full h-14 text-lg bg-gradient-to-r from-gold-500 to-gold-600 text-chocolate-950 hover:from-gold-400 hover:to-gold-500 font-bold shadow-lg shadow-gold-900/20 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
-                                        Proceed to Checkout
-                                    </Button>
-                                </Link>
+                                <Button
+                                    onClick={handleCheckout}
+                                    className="w-full h-14 text-lg bg-gradient-to-r from-gold-500 to-gold-600 text-chocolate-950 hover:from-gold-400 hover:to-gold-500 font-bold shadow-lg shadow-gold-900/20 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    Proceed to Checkout
+                                </Button>
                             </div>
                         )}
                     </motion.div>
@@ -140,3 +152,4 @@ export function CartSidebar() {
         </AnimatePresence>
     )
 }
+

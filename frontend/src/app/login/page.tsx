@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useCart } from "@/context/CartContext"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
@@ -20,6 +21,7 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = React.useState(false)
     const [showPassword, setShowPassword] = React.useState(false)
     const router = useRouter()
+    const { syncCart } = useCart()
 
     const onSubmit = async (data: any) => {
         setIsLoading(true)
@@ -37,12 +39,22 @@ export default function LoginPage() {
             // Store Auth Data
             localStorage.setItem('userInfo', JSON.stringify(result))
 
+            // Sync cart from server
+            await syncCart()
+
             // Redirect based on role
             // Since we only allow login if approved, we can assume access is granted.
+
+            // Check for redirect URL from query params
+            const params = new URLSearchParams(window.location.search)
+            const redirect = params.get('redirect')
+
             if (result.isAdmin) {
-                window.location.href = '/admin/dashboard' // Corrected redirect for admin
+                router.push('/admin/dashboard')
+            } else if (redirect) {
+                router.push(`/${redirect}`)
             } else {
-                window.location.href = '/shop'
+                router.push('/shop')
             }
         } catch (err: any) {
             setError(err.message)

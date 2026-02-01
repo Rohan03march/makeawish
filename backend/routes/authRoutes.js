@@ -9,13 +9,15 @@ const {
     getFavorites,
     toggleFavorite,
     getUserProfile,
-    updateUserProfile
+    updateUserProfile,
+    updateUserCart
 } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.post('/register', registerUser);
 router.post('/login', authUser);
 router.route('/profile').get(protect, getUserProfile).put(protect, updateUserProfile);
+router.route('/cart').put(protect, updateUserCart);
 
 // Admin Flows
 router.get('/pending-users', protect, admin, getPendingUsers);

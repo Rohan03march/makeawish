@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
+import { API_URL } from "@/lib/config"
 
 interface CartItem {
     _id: string
@@ -29,6 +30,7 @@ interface CartContextType {
     isCartOpen: boolean
     setIsCartOpen: (isOpen: boolean) => void
     cartCount: number
+    syncCart: () => Promise<void>
 }
 
 const CartContext = createContext<CartContextType | null>(null)
@@ -36,30 +38,139 @@ const CartContext = createContext<CartContextType | null>(null)
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([])
 
-    // Load cart from local storage on mount
+    const syncCart = async () => {
+        const userInfo = localStorage.getItem("userInfo")
+        if (userInfo) {
+            try {
+                const { token } = JSON.parse(userInfo)
+                const res = await fetch(`${API_URL}/api/auth/profile`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                if (res.ok) {
+                    const data = await res.json()
+                    const serverCart = data.cart || []
+
+                    if (serverCart.length > 0) {
+                        const cleanServerCart = serverCart.map((item: any) => ({
+                            _id: item.product || item._id,
+                            name: item.name,
+                            price: item.price,
+                            image: item.image,
+                            countInStock: 10,
+                            qty: item.qty
+                        }))
+                        setCartItems(cleanServerCart)
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch server cart", error)
+            }
+        }
+    }
+
+    // Load cart from local storage on mount AND fetch from server if logged in
     useEffect(() => {
         const storedCart = localStorage.getItem("cartItems")
+        const userInfo = localStorage.getItem("userInfo")
+
+        let localItems: CartItem[] = []
+
         if (storedCart) {
             try {
                 const parsedCart = JSON.parse(storedCart)
-                // Sanitize loaded items to ensure no NaN values persist
-                const cleanCart = parsedCart.map((item: any) => ({
+                localItems = parsedCart.map((item: any) => ({
                     ...item,
                     price: Number(item.price) || 0,
                     qty: Number(item.qty) || 1,
                     countInStock: Number(item.countInStock) || 0
                 }))
-                setCartItems(cleanCart)
+                setCartItems(localItems)
             } catch (e) {
                 console.error("Failed to parse cart items", e)
-                setCartItems([])
             }
+        }
+
+        // If logged in, fetch from server
+        if (userInfo) {
+            const fetchServerCart = async () => {
+                try {
+                    const { token } = JSON.parse(userInfo)
+                    const res = await fetch(`${API_URL}/api/auth/profile`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    })
+                    if (res.ok) {
+                        const data = await res.json()
+                        const serverCart = data.cart || []
+
+                        // Strategy: 
+                        // 1. If server cart is empty but local has items (guest -> login), keep local and lets save it in next effect.
+                        // 2. If server cart has items, prefer server cart (or merge). Let's prefer server cart for consistency across devices, 
+                        //    UNLESS local cart has items that are NOT in server cart (merging is complex).
+                        //    Simple approach: If server has items, use server items. If server empty, use local.
+
+                        if (serverCart.length > 0) {
+                            // Ensure structure matches
+                            const cleanServerCart = serverCart.map((item: any) => ({
+                                _id: item.product || item._id, // Handle if product is populated or not
+                                name: item.name,
+                                price: item.price,
+                                image: item.image,
+                                countInStock: 10, // Default or fetch real stock? 
+                                qty: item.qty
+                            }))
+                            setCartItems(cleanServerCart)
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch server cart", error)
+                }
+            }
+            fetchServerCart()
         }
     }, [])
 
-    // Update local storage when cart changes
+    // Update local storage AND server when cart changes
     useEffect(() => {
         localStorage.setItem("cartItems", JSON.stringify(cartItems))
+
+        const userInfo = localStorage.getItem("userInfo")
+        if (userInfo) {
+            const saveToServer = async () => {
+                try {
+                    const { token } = JSON.parse(userInfo)
+                    // Format for backend
+                    const cartPayload = cartItems.map(item => ({
+                        product: item._id,
+                        name: item.name,
+                        price: item.price,
+                        image: item.image,
+                        qty: item.qty
+                    }))
+
+                    await fetch(`${API_URL}/api/auth/cart`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ cart: cartPayload })
+                    })
+                } catch (error) {
+                    console.error("Failed to save cart to server", error)
+                }
+            }
+
+            // Debounce to prevent too many requests
+            const timeoutId = setTimeout(() => {
+                saveToServer()
+            }, 1000)
+
+            return () => clearTimeout(timeoutId)
+        }
     }, [cartItems])
 
     const addToCart = (item: CartItem, qty: number) => {
@@ -118,7 +229,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             cartTotal: totalPrice, // Alias
             isCartOpen,
             setIsCartOpen,
-            cartCount
+            cartCount,
+            syncCart
         }}>
             {children}
         </CartContext.Provider>

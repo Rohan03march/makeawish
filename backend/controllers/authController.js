@@ -204,7 +204,8 @@ const getUserProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
-            addresses: user.addresses || []
+            addresses: user.addresses || [],
+            cart: user.cart || []
         });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -245,6 +246,25 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
+// @desc    Update user cart
+// @route   PUT /api/auth/cart
+// @access  Private
+const updateUserCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            user.cart = req.body.cart || [];
+            const updatedUser = await user.save();
+            res.json(updatedUser.cart);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     authUser,
     registerUser,
@@ -254,5 +274,6 @@ module.exports = {
     getFavorites,
     toggleFavorite,
     getUserProfile,
-    updateUserProfile
+    updateUserProfile,
+    updateUserCart
 };
