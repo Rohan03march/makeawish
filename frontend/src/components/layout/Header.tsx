@@ -14,6 +14,7 @@ const navigation = [
     { name: "Custom Builder", href: "/builder" },
     { name: "Gifts", href: "/gifts" },
     { name: "Occasions", href: "/occasions" },
+    { name: "Contact", href: "/contact" },
 ]
 
 import { useCart } from "@/context/CartContext"

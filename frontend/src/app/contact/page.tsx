@@ -12,6 +12,8 @@ export default function ContactPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [reason, setReason] = useState("")
 
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
@@ -21,7 +23,8 @@ export default function ContactPage() {
 
         toast.success("Message sent successfully! We'll be in touch shortly.")
         setIsLoading(false)
-        // Reset form would go here
+        setReason("")
+            ; (e.target as HTMLFormElement).reset()
     }
 
     return (
@@ -102,22 +105,11 @@ export default function ContactPage() {
                             <div className="space-y-6">
                                 <div className="flex items-start gap-4">
                                     <div className="h-10 w-10 bg-gold-100 rounded-full flex items-center justify-center shrink-0 text-gold-700">
-                                        <MapPin className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-chocolate-900">Visit Our Atelier</h4>
-                                        <p className="text-chocolate-600">Where magic happens<br />8001 Zurich, Switzerland</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4">
-                                    <div className="h-10 w-10 bg-gold-100 rounded-full flex items-center justify-center shrink-0 text-gold-700">
                                         <Mail className="h-5 w-5" />
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-chocolate-900">Email Us</h4>
-                                        <p className="text-chocolate-600">hello@makeawish.com</p>
-                                        <p className="text-chocolate-600">support@makeawish.com</p>
+                                        <p className="text-chocolate-600">Makeawish.dm@gmail.com</p>
                                     </div>
                                 </div>
 
@@ -127,7 +119,7 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-chocolate-900">Call Us</h4>
-                                        <p className="text-chocolate-600">+41 44 123 45 67</p>
+                                        <p className="text-chocolate-600">+91 9876543210</p>
                                         <p className="text-xs text-chocolate-500 mt-1">Mon-Fri, 9am - 6pm CET</p>
                                     </div>
                                 </div>
