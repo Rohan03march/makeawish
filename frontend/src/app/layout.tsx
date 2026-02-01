@@ -42,7 +42,6 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} ${script.variable} antialiased min-h-screen flex flex-col bg-chocolate-950 text-white selection:bg-gold-500 selection:text-chocolate-950`}
       >
-        <div className="bg-noise" />
         <Toaster position="top-center" toastOptions={{
           style: {
             background: '#333',

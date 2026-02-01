@@ -69,7 +69,9 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     box-shadow: 0 0 0 0 rgba(198, 166, 51, 0.4);
   }
@@ -101,10 +103,15 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  background-attachment: fixed;
   background-image:
     radial-gradient(circle at 15% 50%, rgba(198, 166, 51, 0.08), transparent 25%),
     radial-gradient(circle at 85% 30%, rgba(113, 67, 53, 0.15), transparent 40%);
+}
+
+@media (min-width: 768px) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 .glass {
@@ -167,12 +174,14 @@ html {
 }
 
 /* Smooth transitions for interactive elements */
-button, a {
+button,
+a {
   transition: all 0.2s ease-in-out;
 }
 
 /* Focus states for accessibility */
-button:focus-visible, a:focus-visible {
+button:focus-visible,
+a:focus-visible {
   outline: 2px solid #C6A633;
   outline-offset: 2px;
 }

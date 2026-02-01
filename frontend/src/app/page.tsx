@@ -105,7 +105,7 @@ export default function Home() {
 
       {/* Intro / Philosophy */}
       <section className="py-32 bg-chocolate-950 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-gold-500/5 rounded-full blur-[60px] md:blur-[120px] pointer-events-none" />
         <div className="container px-4 md:px-6 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -276,12 +276,12 @@ export default function Home() {
 
       {/* Featured Product */}
       <section className="py-32 bg-chocolate-50 text-chocolate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5" />
+        <div className="absolute inset-0 opacity-5 pointer-events-none bg-repeat [background-size:20px_20px] [background-image:radial-gradient(#000_1px,transparent_1px)]" />
         <div className="container px-4 md:px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center gap-20">
             <div className="flex-1 relative order-2 md:order-1">
               <div className="relative aspect-square w-full max-w-lg mx-auto">
-                <div className="absolute inset-0 bg-gold-400/20 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gold-400/20 rounded-full blur-2xl md:blur-3xl" />
                 <motion.div
                   animate={{ y: [-10, 10, -10] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
