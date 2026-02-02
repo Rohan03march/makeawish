@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { X, Upload, Image as ImageIcon, Link as LinkIcon, Check, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { API_URL } from "@/lib/config"
 
 interface AddProductModalProps {
     isOpen: boolean
@@ -30,6 +31,8 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
     const [uploadMethod, setUploadMethod] = useState<"file" | "url">("file")
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [urlInput, setUrlInput] = useState("")
+    const [pendingFiles, setPendingFiles] = useState<Map<string, File>>(new Map())
+    const [isUploading, setIsUploading] = useState(false)
 
     // Reset state when modal opens/closes or product changes
     useEffect(() => {
@@ -45,6 +48,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                 images: editProduct?.images || (editProduct?.image ? [editProduct.image] : [])
             })
             setUrlInput("")
+            setPendingFiles(new Map())
         }
     }, [isOpen, editProduct])
 
@@ -78,6 +82,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
 
     const handleFile = (file: File) => {
         const url = URL.createObjectURL(file)
+        setPendingFiles(prev => new Map(prev).set(url, file))
         setFormData(prev => ({ ...prev, images: [...prev.images, url] }))
     }
 
@@ -89,24 +94,68 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
     }
 
     const removeImage = (index: number) => {
+        const imageToRemove = formData.images[index];
+        setPendingFiles(prev => {
+            const next = new Map(prev);
+            next.delete(imageToRemove);
+            return next;
+        });
         setFormData(prev => ({
             ...prev,
             images: prev.images.filter((_: string, i: number) => i !== index)
         }))
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        onSave({
-            ...formData,
-            id: editProduct?.id || `PRD-${Date.now()}`,
-            price: parseFloat(formData.price),
-            stock: parseInt(formData.stock),
-            rating: parseFloat(formData.rating) || 0,
-            // Ensure main image is set for backward compatibility
-            image: formData.images.length > 0 ? formData.images[0] : ""
-        })
-        onClose()
+        setIsUploading(true)
+
+        try {
+            const updatedImages = await Promise.all(formData.images.map(async (img: string) => {
+                const file = pendingFiles.get(img);
+                if (file) {
+                    const uploadFormData = new FormData();
+                    uploadFormData.append('image', file);
+
+                    const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+                    const token = user?.token
+
+                    const res = await fetch(`${API_URL}/api/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: uploadFormData
+                    });
+
+                    if (res.ok) {
+                        const secureUrl = await res.json();
+                        return secureUrl;
+                    } else {
+                        console.error("Upload failed");
+                        throw new Error("Image upload failed");
+                    }
+                }
+                return img;
+            }));
+
+            onSave({
+                ...formData,
+                images: updatedImages,
+                id: editProduct?.id || `PRD-${Date.now()}`,
+                price: parseFloat(formData.price),
+                stock: parseInt(formData.stock),
+                rating: parseFloat(formData.rating) || 0,
+                // Ensure main image is set for backward compatibility
+                image: updatedImages.length > 0 ? updatedImages[0] : ""
+            })
+            onClose()
+        } catch (error) {
+            console.error("Error submitting product", error)
+            alert("Failed to upload images or save product. Please try again.")
+        } finally {
+            setIsUploading(false)
+        }
     }
 
     return (
@@ -308,6 +357,14 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                     {editProduct ? 'Update Product' : 'Add Product'}
                                 </button>
                             </div>
+                            {isUploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl z-20">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-8 h-8 border-4 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-gold-400 font-bold">Uploading Images...</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </form>
                 </div>
