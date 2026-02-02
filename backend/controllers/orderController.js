@@ -45,6 +45,12 @@ const addOrderItems = async (req, res) => {
             }
         }
 
+        if (createdOrder) {
+            // Emit socket event
+            const io = req.app.get('io');
+            io.emit('order_update', { type: 'create', order: createdOrder });
+        }
+
         res.status(201).json(createdOrder);
     }
 };
@@ -81,6 +87,8 @@ const updateOrderToPaid = async (req, res) => {
 
         const updatedOrder = await order.save();
 
+        req.app.get('io').emit('order_update', { type: 'update', order: updatedOrder });
+
         res.json(updatedOrder);
     } else {
         res.status(404);
@@ -100,6 +108,8 @@ const updateOrderToDelivered = async (req, res) => {
         order.status = 'Delivered';
 
         const updatedOrder = await order.save();
+
+        req.app.get('io').emit('order_update', { type: 'update', order: updatedOrder });
 
         res.json(updatedOrder);
     } else {
@@ -138,6 +148,7 @@ const updateOrderStatus = async (req, res) => {
             order.deliveredAt = Date.now();
         }
         const updatedOrder = await order.save();
+        req.app.get('io').emit('order_update', { type: 'update', order: updatedOrder });
         res.json(updatedOrder);
     } else {
         res.status(404).json({ message: 'Order not found' });
@@ -166,6 +177,7 @@ const cancelOrder = async (req, res) => {
             order.isDelivered = false;
 
             const updatedOrder = await order.save();
+            req.app.get('io').emit('order_update', { type: 'update', order: updatedOrder });
             res.json(updatedOrder);
         } else {
             res.status(404).json({ message: 'Order not found' });
@@ -214,6 +226,7 @@ const deleteOrder = async (req, res) => {
         }
 
         await order.deleteOne();
+        req.app.get('io').emit('order_update', { type: 'delete', id: req.params.id });
         res.json({ message: 'Order removed' });
     } else {
         res.status(404);
