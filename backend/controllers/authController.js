@@ -254,8 +254,13 @@ const updateUserCart = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (user) {
+            console.log(`[DEBUG] Updating cart for user ${req.user._id}`);
+            console.log(`[DEBUG] New cart payload:`, JSON.stringify(req.body.cart, null, 2));
+
             user.cart = req.body.cart || [];
             const updatedUser = await user.save();
+
+            console.log(`[DEBUG] Cart saved. New length: ${updatedUser.cart.length}`);
             res.json(updatedUser.cart);
         } else {
             res.status(404).json({ message: 'User not found' });

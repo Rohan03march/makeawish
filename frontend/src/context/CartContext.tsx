@@ -10,6 +10,12 @@ interface CartItem {
     image: string
     countInStock: number
     qty: number
+    customDetails?: {
+        base: string
+        filling: string
+        shape: string
+        text?: string
+    }
 }
 
 interface CartContextType {
@@ -97,10 +103,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             const fetchServerCart = async () => {
                 try {
                     const { token } = JSON.parse(userInfo)
-                    const res = await fetch(`${API_URL}/api/auth/profile`, {
+                    const res = await fetch(`${API_URL}/api/auth/profile?t=${Date.now()}`, {
                         headers: {
                             Authorization: `Bearer ${token}`
-                        }
+                        },
+                        cache: 'no-store'
                     })
                     if (res.ok) {
                         const data = await res.json()
@@ -133,73 +140,82 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [])
 
+    // Helper to save to server immediately
+    const saveCartToBackend = async (currentCart: CartItem[]) => {
+        const userInfo = localStorage.getItem("userInfo")
+        if (userInfo) {
+            try {
+                const { token } = JSON.parse(userInfo)
+                const cartPayload = currentCart.map(item => ({
+                    product: (item.customDetails || item._id.startsWith('custom-')) ? null : item._id,
+                    name: item.name,
+                    price: item.price,
+                    image: item.image,
+                    qty: item.qty,
+                    customDetails: item.customDetails
+                }))
+
+                await fetch(`${API_URL}/api/auth/cart`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ cart: cartPayload })
+                })
+            } catch (error) {
+                console.error("Failed to save cart to server", error)
+            }
+        }
+    }
+
     // Update local storage AND server when cart changes
     useEffect(() => {
         localStorage.setItem("cartItems", JSON.stringify(cartItems))
 
-        const userInfo = localStorage.getItem("userInfo")
-        if (userInfo) {
-            const saveToServer = async () => {
-                try {
-                    const { token } = JSON.parse(userInfo)
-                    // Format for backend
-                    const cartPayload = cartItems.map(item => ({
-                        product: item._id,
-                        name: item.name,
-                        price: item.price,
-                        image: item.image,
-                        qty: item.qty
-                    }))
+        // Debounce for general updates (like quantity changes)
+        const timeoutId = setTimeout(() => {
+            saveCartToBackend(cartItems)
+        }, 1000)
 
-                    await fetch(`${API_URL}/api/auth/cart`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ cart: cartPayload })
-                    })
-                } catch (error) {
-                    console.error("Failed to save cart to server", error)
-                }
-            }
-
-            // Debounce to prevent too many requests
-            const timeoutId = setTimeout(() => {
-                saveToServer()
-            }, 1000)
-
-            return () => clearTimeout(timeoutId)
-        }
+        return () => clearTimeout(timeoutId)
     }, [cartItems])
 
     const addToCart = (item: CartItem, qty: number) => {
         const existItem = cartItems.find((x) => x._id === item._id)
+        let newCart;
 
         if (existItem) {
-            setCartItems(
-                cartItems.map((x) =>
-                    x._id === existItem._id ? { ...x, qty: qty } : x
-                )
+            newCart = cartItems.map((x) =>
+                x._id === existItem._id ? { ...x, qty: qty } : x
             )
         } else {
-            setCartItems([...cartItems, { ...item, qty }])
+            newCart = [...cartItems, { ...item, qty }]
         }
+        setCartItems(newCart)
+        // Immediate save for add
+        saveCartToBackend(newCart)
     }
 
     const removeFromCart = (id: string) => {
-        setCartItems(cartItems.filter((x) => x._id !== id))
+        const newCart = cartItems.filter((x) => x._id !== id)
+        setCartItems(newCart)
+        // Immediate save for remove
+        saveCartToBackend(newCart)
     }
 
     const updateQty = (id: string, qty: number) => {
         setCartItems(cartItems.map(item =>
             item._id === id ? { ...item, qty: Math.min(Math.max(1, qty), item.countInStock) } : item
         ))
+        // Debounce handled by useEffect
     }
 
     const clearCart = () => {
         setCartItems([])
         localStorage.removeItem("cartItems")
+        // Immediate save for clear
+        saveCartToBackend([])
     }
 
     // Calculate Prices

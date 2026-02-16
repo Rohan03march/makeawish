@@ -52,7 +52,7 @@ const deleteProduct = async (req, res) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
     try {
-        const { name, price, description, image, category, countInStock, rating, ingredients, images } = req.body;
+        const { name, price, description, image, category, countInStock, rating, ingredients, images, isBestseller } = req.body;
 
         const product = new Product({
             name: name || 'Sample Name',
@@ -64,6 +64,7 @@ const createProduct = async (req, res) => {
             countInStock: countInStock || 0,
             numReviews: 0,
             rating: rating || 0,
+            isBestseller: isBestseller || false,
             ingredients: ingredients || '',
             description: description || 'Sample description'
         });
@@ -79,7 +80,7 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
-    const { name, price, description, image, category, countInStock } = req.body;
+    const { name, price, description, image, category, countInStock, isBestseller } = req.body;
 
     try {
         const product = await Product.findById(req.params.id);
@@ -92,6 +93,7 @@ const updateProduct = async (req, res) => {
             product.category = category || product.category;
             product.countInStock = countInStock || product.countInStock;
             if (req.body.rating !== undefined) product.rating = req.body.rating;
+            if (req.body.isBestseller !== undefined) product.isBestseller = req.body.isBestseller;
             if (req.body.ingredients !== undefined) product.ingredients = req.body.ingredients;
             if (req.body.images !== undefined) product.images = req.body.images;
             // Ensure main image is updated if images array is updated and valid

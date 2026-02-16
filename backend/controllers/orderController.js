@@ -37,10 +37,12 @@ const addOrderItems = async (req, res) => {
         // Decrement countInStock
         if (createdOrder) {
             for (const item of orderItems) {
-                const product = await Product.findById(item.product);
-                if (product) {
-                    product.countInStock = product.countInStock - item.qty;
-                    await product.save();
+                if (item.product) {
+                    const product = await Product.findById(item.product);
+                    if (product) {
+                        product.countInStock = product.countInStock - item.qty;
+                        await product.save();
+                    }
                 }
             }
         }
@@ -122,7 +124,7 @@ const updateOrderToDelivered = async (req, res) => {
 // @route   GET /api/orders/myorders
 // @access  Private
 const getMyOrders = async (req, res) => {
-    const orders = await Order.find({ user: req.user._id });
+    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json(orders);
 };
 
@@ -130,7 +132,7 @@ const getMyOrders = async (req, res) => {
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = async (req, res) => {
-    const orders = await Order.find({}).populate('user', 'id name email');
+    const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
     res.json(orders);
 };
 
@@ -189,7 +191,7 @@ const cancelOrder = async (req, res) => {
 // @desc    Create Razorpay Order
 // @route   POST /api/orders/razorpay
 // @access  Private
-const createRazorpayOrder = async (req, res) => {
+const createRazorpayOrder = async (req, res, next) => {
     const { amount } = req.body;
 
     const razorpay = new Razorpay({
@@ -208,7 +210,7 @@ const createRazorpayOrder = async (req, res) => {
         res.json(order);
     } catch (error) {
         res.status(500);
-        throw new Error(error.message);
+        next(error);
     }
 };
 

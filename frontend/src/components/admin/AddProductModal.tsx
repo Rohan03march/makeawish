@@ -21,6 +21,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
         price: editProduct?.price || "",
         stock: editProduct?.stock || "",
         rating: editProduct?.rating || "",
+        isBestseller: editProduct?.isBestseller || false,
         ingredients: editProduct?.ingredients || "",
         images: editProduct?.images || (editProduct?.image ? [editProduct.image] : [])
     })
@@ -44,6 +45,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                 price: editProduct?.price || "",
                 stock: editProduct?.stock || "",
                 rating: editProduct?.rating || "",
+                isBestseller: editProduct?.isBestseller || false,
                 ingredients: editProduct?.ingredients || "",
                 images: editProduct?.images || (editProduct?.image ? [editProduct.image] : [])
             })
@@ -146,6 +148,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                 price: parseFloat(formData.price),
                 stock: parseInt(formData.stock),
                 rating: parseFloat(formData.rating) || 0,
+                isBestseller: formData.isBestseller,
                 // Ensure main image is set for backward compatibility
                 image: updatedImages.length > 0 ? updatedImages[0] : ""
             })
@@ -204,7 +207,14 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                             onDrop={handleDrop}
                                             onClick={() => fileInputRef.current?.click()}
                                         >
-                                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+                                            <input
+                                                key="file-input"
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleFileSelect}
+                                            />
                                             <div className="text-center p-4">
                                                 <ImageIcon className="w-8 h-8 text-chocolate-300 mx-auto mb-2" />
                                                 <p className="text-sm text-chocolate-300">Click to add image</p>
@@ -245,7 +255,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                 <label className="block text-sm font-bold text-gold-400 mb-2 uppercase tracking-wider">Description</label>
                                 <textarea
                                     rows={4}
-                                    value={formData.description || ""}
+                                    value={formData.description ?? ""}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     className="w-full px-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white placeholder-chocolate-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all resize-none"
                                     placeholder="Describe the flavors..."
@@ -256,7 +266,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                 <label className="block text-sm font-bold text-gold-400 mb-2 uppercase tracking-wider">Ingredients</label>
                                 <textarea
                                     rows={3}
-                                    value={formData.ingredients || ""}
+                                    value={formData.ingredients ?? ""}
                                     onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
                                     className="w-full px-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white placeholder-chocolate-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all resize-none"
                                     placeholder="Cocoa mass, sugar, hazelnuts..."
@@ -271,7 +281,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                 <input
                                     type="text"
                                     required
-                                    value={formData.name || ""}
+                                    value={formData.name ?? ""}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="w-full px-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white placeholder-chocolate-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all font-serif text-lg"
                                     placeholder="e.g. Midnight Truffle"
@@ -282,7 +292,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                 <label className="block text-sm font-bold text-gold-400 mb-2 uppercase tracking-wider">Category *</label>
                                 <select
                                     required
-                                    value={formData.category || "Chocolates"}
+                                    value={formData.category ?? "Chocolates"}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                     className="w-full px-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all cursor-pointer"
                                 >
@@ -304,7 +314,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                             required
                                             min="0"
                                             step="0.01"
-                                            value={formData.price || ""}
+                                            value={formData.price ?? ""}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                             className="w-full pl-8 pr-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white placeholder-chocolate-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all"
                                             placeholder="0.00"
@@ -318,7 +328,7 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                         type="number"
                                         required
                                         min="0"
-                                        value={formData.stock || ""}
+                                        value={formData.stock ?? ""}
                                         onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                                         className="w-full px-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white placeholder-chocolate-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all"
                                         placeholder="0"
@@ -333,11 +343,24 @@ export function AddProductModal({ isOpen, onClose, onSave, editProduct }: AddPro
                                     min="0"
                                     max="5"
                                     step="0.1"
-                                    value={formData.rating || ""}
+                                    value={formData.rating ?? ""}
                                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                                     className="w-full px-4 py-3 bg-chocolate-800/50 border border-white/10 rounded-xl text-white placeholder-chocolate-500 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-all"
                                     placeholder="0.0"
                                 />
+                            </div>
+
+                            <div className="flex items-center gap-3 bg-chocolate-800/50 p-4 rounded-xl border border-white/10">
+                                <input
+                                    type="checkbox"
+                                    id="isBestseller"
+                                    checked={formData.isBestseller}
+                                    onChange={(e) => setFormData({ ...formData, isBestseller: e.target.checked })}
+                                    className="w-5 h-5 rounded border-gold-500 text-gold-500 focus:ring-gold-500/50 cursor-pointer accent-gold-500"
+                                />
+                                <label htmlFor="isBestseller" className="text-sm font-bold text-gold-400 uppercase tracking-wider cursor-pointer select-none">
+                                    Mark as Bestseller
+                                </label>
                             </div>
 
                             {/* Action Buttons */}

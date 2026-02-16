@@ -49,6 +49,11 @@ const productSchema = mongoose.Schema({
         required: true,
         default: 0
     },
+    isBestseller: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
     ingredients: {
         type: String,
         required: false,

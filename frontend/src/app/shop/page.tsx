@@ -2,10 +2,16 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { motion, AnimatePresence } from "framer-motion"
-import { Filter, ChevronDown, Star, Heart, X } from "lucide-react"
-import Link from "next/link"
+import { motion } from "framer-motion"
+import { ChevronDown } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { ProductCard } from "@/components/ProductCard" // Import ProductCard
 import { useCart } from "@/context/CartContext"
 import Image from "next/image"
 import { API_URL } from "@/lib/config"
@@ -17,10 +23,9 @@ import { API_URL } from "@/lib/config"
 export default function ShopPage() {
     const [products, setProducts] = React.useState<any[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
-    const [isFilterOpen, setIsFilterOpen] = React.useState(false)
     const { addToCart } = useCart() // Updated to addToCart to match context
     const [selectedCategory, setSelectedCategory] = React.useState("All")
-    const [isDesktop, setIsDesktop] = React.useState(true)
+    const [sortOption, setSortOption] = React.useState("featured")
 
     const [favoriteIds, setFavoriteIds] = React.useState<string[]>([])
 
@@ -60,11 +65,6 @@ export default function ShopPage() {
 
         fetchProducts()
         fetchFavorites()
-
-        const handleResize = () => setIsDesktop(window.innerWidth >= 1024)
-        handleResize()
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
     }, [])
 
     const toggleFavorite = async (e: React.MouseEvent, productId: string) => {
@@ -96,9 +96,29 @@ export default function ShopPage() {
         }
     }
 
-    const filteredProducts = selectedCategory === "All"
-        ? products
-        : products.filter(p => p.category === selectedCategory || (selectedCategory === "Gifts" && p.category === "Gifts"))
+    const filteredProducts = React.useMemo(() => {
+        let result = selectedCategory === "All"
+            ? [...products]
+            : products.filter(p => p.category === selectedCategory || (selectedCategory === "Gifts" && p.category === "Gifts"))
+
+        switch (sortOption) {
+            case "price-asc":
+                result.sort((a, b) => a.price - b.price)
+                break
+            case "price-desc":
+                result.sort((a, b) => b.price - a.price)
+                break
+            case "newest":
+                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                break
+            case "featured":
+            default:
+                // Featured could be bestseller first, or just default order
+                result.sort((a, b) => (b.isBestseller === a.isBestseller) ? 0 : b.isBestseller ? 1 : -1)
+                break
+        }
+        return result
+    }, [products, selectedCategory, sortOption])
 
     return (
         <div className="min-h-screen bg-chocolate-950/95">
@@ -112,7 +132,7 @@ export default function ShopPage() {
                     </p>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-12">
+                <div className="flex flex-col gap-8">
                     {isLoading && (
                         <div className="w-full flex justify-center py-20">
                             <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
@@ -122,152 +142,53 @@ export default function ShopPage() {
                     {!isLoading && (
                         <>
 
-                            {/* Mobile Filter Toggle */}
-                            <div className="lg:hidden mb-6">
-                                <Button onClick={() => setIsFilterOpen(!isFilterOpen)} variant="outline" className="w-full border-chocolate-700 text-chocolate-100 flex justify-between h-12">
-                                    <span className="flex items-center"><Filter className="mr-2 h-4 w-4" /> Filter & Sort</span>
-                                    <ChevronDown className={`h-4 w-4 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
-                                </Button>
+                            {/* Filter & Sort Toolbar */}
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-chocolate-900/40 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
+                                {/* Categories */}
+                                <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-4 md:pb-0 no-scrollbar mask-gradient-right px-1">
+                                    {['All', 'Chocolates', 'Bars', 'Gifts', 'Seasonal'].map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setSelectedCategory(cat)}
+                                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap mb-1 ${selectedCategory === cat
+                                                ? 'bg-gold-500 text-chocolate-950 font-bold scale-105'
+                                                : 'bg-chocolate-800/30 text-chocolate-200 border border-white/10 hover:border-gold-500/50 hover:text-white hover:bg-chocolate-800/80'
+                                                }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Sort By */}
+                                <div className="flex items-center gap-3 w-full md:w-auto min-w-[200px]">
+                                    <span className="text-sm text-chocolate-300 whitespace-nowrap hidden md:inline">Sort by:</span>
+                                    <Select value={sortOption} onValueChange={setSortOption}>
+                                        <SelectTrigger className="w-full md:w-[180px] bg-chocolate-800/50 border-white/10 text-white focus:ring-gold-500/50">
+                                            <SelectValue placeholder="Sort by" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-chocolate-900 border-white/10 text-white">
+                                            <SelectItem value="featured" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Featured</SelectItem>
+                                            <SelectItem value="price-asc" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Price: Low to High</SelectItem>
+                                            <SelectItem value="price-desc" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Price: High to Low</SelectItem>
+                                            <SelectItem value="newest" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Newest Arrivals</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-
-                            {/* Sidebar Filters */}
-                            <AnimatePresence>
-                                {(isFilterOpen || isDesktop) && (
-                                    <motion.aside
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className={`w-full lg:w-72 space-y-8 lg:block overflow-hidden lg:overflow-visible`}
-                                    >
-                                        <div className="glass p-6 rounded-xl border border-white/5 space-y-8">
-                                            <div>
-                                                <h3 className="text-xl font-serif font-bold text-gold-400 mb-6">Categories</h3>
-                                                <div className="space-y-3">
-                                                    {['All', 'Dark', 'Milk', 'White', 'Fruit', 'Gifts'].map((cat) => (
-                                                        <div
-                                                            key={cat}
-                                                            className="flex items-center group cursor-pointer"
-                                                            onClick={() => setSelectedCategory(cat)}
-                                                        >
-                                                            <div className={`w-4 h-4 rounded-full border border-gold-500 mr-3 flex items-center justify-center transition-all ${selectedCategory === cat ? 'bg-gold-500' : 'bg-transparent'}`}>
-                                                                {selectedCategory === cat && <div className="w-2 h-2 rounded-full bg-chocolate-950" />}
-                                                            </div>
-                                                            <span className={`text-sm transition-colors ${selectedCategory === cat ? 'text-white font-bold' : 'text-chocolate-200 group-hover:text-gold-400'}`}>{cat}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <h3 className="text-xl font-serif font-bold text-gold-400 mb-6">Price Range</h3>
-                                                <div className="space-y-4">
-                                                    <input type="range" min="0" max="15000" className="w-full accent-gold-500 h-1 bg-chocolate-700 rounded-lg appearance-none cursor-pointer" />
-                                                    <div className="flex justify-between text-xs text-chocolate-300 font-mono">
-                                                        <span>₹0</span>
-                                                        <span>₹15,000+</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.aside>
-                                )}
-                            </AnimatePresence>
 
                             {/* Product Grid */}
                             <div className="flex-1">
-                                {/* Sort Bar (Desktop) */}
-                                <div className="hidden lg:flex items-center justify-between mb-8 pb-4 border-b border-white/5">
-                                    <span className="text-chocolate-300">{filteredProducts.length} Products Found</span>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-sm text-chocolate-300">Sort by:</span>
-                                        <select className="bg-transparent border border-chocolate-700 text-white text-sm rounded-md px-4 py-2 focus:ring-1 focus:ring-gold-500 focus:border-gold-500 outline-none">
-                                            <option className="bg-chocolate-900">Featured</option>
-                                            <option className="bg-chocolate-900">Price: Low to High</option>
-                                            <option className="bg-chocolate-900">Price: High to Low</option>
-                                            <option className="bg-chocolate-900">Newest Arrivals</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                                     {filteredProducts.map((product) => (
-                                        <motion.div
-                                            key={product._id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            viewport={{ once: true }}
-                                            whileHover={{ y: -8 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="group"
-                                        >
-                                            <Card className="bg-chocolate-900/40 border-white/5 text-white overflow-hidden backdrop-blur-sm h-full flex flex-col hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:border-gold-500/30 transition-all duration-500">
-                                                <div className="relative aspect-square p-8 flex items-center justify-center bg-gradient-to-b from-white/5 to-transparent group-hover:from-white/10 transition-colors duration-500">
-                                                    <Link href={`/product/${product._id}`} className="absolute inset-0 z-0" />
-
-                                                    <motion.div
-                                                        className="relative w-full h-full"
-                                                        whileHover={{ scale: 1.1, rotate: 5 }}
-                                                        transition={{ type: "spring", stiffness: 300 }}
-                                                    >
-                                                        {product.image.startsWith('http') || product.image.startsWith('/') ? (
-                                                            <Image
-                                                                src={product.image}
-                                                                alt={product.name}
-                                                                fill
-                                                                className="object-contain drop-shadow-2xl"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-6xl">🍫</div>
-                                                        )}
-
-                                                    </motion.div>
-
-                                                    <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="secondary"
-                                                            className={`rounded-full bg-white/10 hover:bg-gold-500 hover:text-chocolate-950 text-white backdrop-blur-md ${favoriteIds.includes(product._id) ? 'text-red-500 hover:text-red-600' : ''}`}
-                                                            onClick={(e) => toggleFavorite(e, product._id)}
-                                                        >
-                                                            <Heart className={`h-5 w-5 ${favoriteIds.includes(product._id) ? 'fill-current' : ''}`} />
-                                                        </Button>
-                                                    </div>
-
-                                                    {(product.rating || 0) >= 4.9 && (
-                                                        <div className="absolute top-4 left-4 z-10">
-                                                            <span className="bg-gold-500 text-chocolate-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Bestseller</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <CardContent className="p-6 flex-1 flex flex-col relative z-20 bg-chocolate-900/60">
-                                                    <div className="mb-3 flex items-center justify-between">
-                                                        <div className="flex text-gold-400 gap-1">
-                                                            <Star className="h-3 w-3 fill-current" />
-                                                            <span className="text-xs font-bold pt-0.5">{product.rating || 0}</span>
-
-                                                        </div>
-                                                        <span className="text-xs text-chocolate-400">{product.category}</span>
-                                                    </div>
-
-                                                    <Link href={`/product/${product._id}`} className="group-hover:text-gold-400 transition-colors">
-                                                        <h3 className="text-xl font-bold font-serif mb-2 leading-tight">{product.name}</h3>
-                                                    </Link>
-
-                                                    <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/5">
-                                                        <span className="text-2xl font-bold text-white font-serif">₹{product.price.toLocaleString()}</span>
-                                                        <Button
-                                                            size="sm"
-                                                            disabled={product.countInStock === 0}
-                                                            className="bg-gold-500 text-chocolate-950 hover:bg-white hover:text-chocolate-950 rounded-full px-6 font-bold shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                            onClick={() => addToCart({ ...product, qty: 1 }, 1)}
-                                                        >
-                                                            {product.countInStock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                                                        </Button>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </motion.div>
+                                        <div key={product._id} className="h-full">
+                                            <ProductCard
+                                                product={product}
+                                                isFavorite={favoriteIds.includes(product._id)}
+                                                onToggleFavorite={toggleFavorite}
+                                                onAddToCart={addToCart}
+                                            />
+                                        </div>
                                     ))}
                                 </div>
                             </div>

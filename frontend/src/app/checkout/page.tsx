@@ -110,7 +110,8 @@ export default function CheckoutPage() {
                     qty: item.qty,
                     image: item.image,
                     price: item.price,
-                    product: item._id
+                    product: (item.customDetails || item._id.startsWith('custom-')) ? null : item._id,
+                    customDetails: item.customDetails
                 })),
                 shippingAddress: {
                     address: data.address,

@@ -25,9 +25,9 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                             <div className="flex items-center gap-3">
                                 <h2 className="text-2xl font-serif font-bold text-white">Order Details</h2>
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${order.status === 'Delivered' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                        order.status === 'Shipped' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                            order.status === 'Cancelled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                'bg-gold-500/10 text-gold-400 border-gold-500/20'
+                                    order.status === 'Shipped' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                        order.status === 'Cancelled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                            'bg-gold-500/10 text-gold-400 border-gold-500/20'
                                     }`}>
                                     {order.status}
                                 </span>
@@ -106,6 +106,18 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                                     <div className="flex-1 min-w-0">
                                         <p className="text-white font-medium truncate">{item.name}</p>
                                         <p className="text-sm text-white/40 mt-1">Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
+
+                                        {/* Custom Builder Details */}
+                                        {item.customDetails && (
+                                            <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/10 text-xs text-chocolate-200">
+                                                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                                    {item.customDetails.base && <p><span className="text-gold-500/80">Base:</span> {item.customDetails.base}</p>}
+                                                    {item.customDetails.filling && <p><span className="text-gold-500/80">Filling:</span> {item.customDetails.filling}</p>}
+                                                    {item.customDetails.shape && <p><span className="text-gold-500/80">Shape:</span> {item.customDetails.shape}</p>}
+                                                    {item.customDetails.text && <p className="col-span-2 border-t border-white/10 pt-1 mt-1"><span className="text-gold-500/80">Message:</span> "{item.customDetails.text}"</p>}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="text-gold-400 font-bold font-mono">₹{(item.price * item.quantity).toLocaleString()}</p>
                                 </div>

@@ -91,6 +91,7 @@
   to {
     transform: translateX(0);
     opacity: 1;
+    opacity: 1;
   }
 }
 
@@ -184,4 +185,18 @@ button:focus-visible,
 a:focus-visible {
   outline: 2px solid #C6A633;
   outline-offset: 2px;
+}
+
+/* Utilities */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.mask-gradient-right {
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
 }

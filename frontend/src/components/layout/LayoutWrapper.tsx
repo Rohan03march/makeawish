@@ -17,7 +17,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <>
             <Header />
             <main className="flex-1 overflow-x-hidden">{children}</main>
-            {(!pathname?.startsWith('/order-success')) && <Footer />}
+            {(!pathname?.startsWith('/order-success') && pathname !== '/shop') && <Footer />}
         </>
     )
 }

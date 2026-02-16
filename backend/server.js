@@ -60,6 +60,10 @@ app.get('/api/config/razorpay', (req, res) => {
     res.json({ keyId: process.env.RAZORPAY_KEY_ID });
 });
 
+app.use(require('./middleware/errorMiddleware').notFound);
+app.use(require('./middleware/errorMiddleware').errorHandler);
+
+
 const PORT = process.env.PORT || 5000;
 
 if (require.main === module) {

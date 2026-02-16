@@ -109,6 +109,12 @@ export default function BuilderPage() {
             qty: 1,
             countInStock: 100, // Custom items are always available
             image: selections.shape.image || baseImage(selections.base.id),
+            customDetails: {
+                base: selections.base.name,
+                filling: selections.filling.name,
+                shape: selections.shape.name,
+                text: selections.text
+            }
         }, 1)
     }
 
