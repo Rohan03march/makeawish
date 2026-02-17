@@ -114,9 +114,9 @@ export function ProductCard({ product, isFavorite, onToggleFavorite, onAddToCart
 
                     <div className="mt-auto pt-2 md:pt-4 border-t border-white/5 flex items-end justify-between gap-2">
                         <div className="flex flex-col">
-                            {product.originalPrice && product.originalPrice > product.price && (
+                            {(product.originalPrice || 0) > product.price && (
                                 <span className="text-[10px] md:text-xs text-chocolate-400 line-through leading-none">
-                                    ₹{product.originalPrice.toLocaleString()}
+                                    ₹{(product.originalPrice || 0).toLocaleString()}
                                 </span>
                             )}
                             <span className="text-lg md:text-xl font-serif text-white leading-none mt-0.5">

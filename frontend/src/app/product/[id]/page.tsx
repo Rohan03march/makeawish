@@ -205,8 +205,8 @@ export default function ProductPage() {
                             <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 leading-tight">{product.name}</h1>
                             <div className="flex items-baseline gap-4">
                                 <p className="text-4xl font-light text-gold-500">₹{product.price.toLocaleString()}</p>
-                                {product.originalPrice > product.price && (
-                                    <span className="text-chocolate-400 line-through text-lg">₹{product.originalPrice.toLocaleString()}</span>
+                                {(product.originalPrice || 0) > product.price && (
+                                    <span className="text-chocolate-400 line-through text-lg">₹{(product.originalPrice || 0).toLocaleString()}</span>
                                 )}
                             </div>
                         </div>
