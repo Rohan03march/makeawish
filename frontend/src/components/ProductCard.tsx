@@ -20,6 +20,7 @@ interface Product {
     rating: number
     numReviews: number
     isBestseller?: boolean
+    originalPrice?: number
 }
 
 interface ProductCardProps {
@@ -42,8 +43,8 @@ export function ProductCard({ product, isFavorite, onToggleFavorite, onAddToCart
             {/* V3 Clean Luxury Card */}
             <div className="relative h-full flex flex-col bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:border-gold-500/30 hover:bg-white/10 hover:shadow-lg hover:shadow-black/20">
 
-                {/* Image Section */}
-                <div className="relative aspect-square w-fullbg-gradient-to-b from-white/5 to-transparent p-6">
+                {/* Image Section - Reduced padding on mobile */}
+                <div className="relative aspect-square w-full bg-gradient-to-b from-white/5 to-transparent p-4 md:p-6">
                     <Link href={`/product/${product._id}`} className="absolute inset-0 z-0" />
 
                     {/* Product Image */}
@@ -66,68 +67,78 @@ export function ProductCard({ product, isFavorite, onToggleFavorite, onAddToCart
                     </motion.div>
 
                     {/* Top Actions */}
-                    <div className="absolute top-3 right-3 z-20">
+                    <div className="absolute top-2 right-2 md:top-3 md:right-3 z-20">
                         <button
                             onClick={(e) => onToggleFavorite(e, product._id)}
                             className={cn(
-                                "p-2 rounded-full transition-all duration-300",
+                                "p-1.5 md:p-2 rounded-full transition-all duration-300",
                                 isFavorite
                                     ? "text-red-500 bg-red-500/10"
                                     : "text-chocolate-200 hover:text-white hover:bg-white/10"
                             )}
                         >
-                            <Heart className={cn("w-5 h-5", isFavorite && "fill-current")} />
+                            <Heart className={cn("w-4 h-4 md:w-5 md:h-5", isFavorite && "fill-current")} />
                         </button>
                     </div>
 
                     {/* Badges */}
-                    <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
+                    <div className="absolute top-2 left-2 md:top-3 md:left-3 z-20 flex flex-col gap-1.5 md:gap-2">
                         {product.isBestseller && (
-                            <span className="bg-gold-500 text-chocolate-950 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                            <span className="bg-gold-500 text-chocolate-950 text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 rounded uppercase tracking-wider">
                                 Bestseller
                             </span>
                         )}
                         {product.countInStock <= 5 && product.countInStock > 0 && (
-                            <span className="bg-red-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                            <span className="bg-red-500/90 text-white text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 rounded uppercase tracking-wider">
                                 Low Stock
                             </span>
                         )}
                     </div>
                 </div>
 
-                {/* Content Section */}
-                <div className="p-5 flex-1 flex flex-col">
-                    <div className="mb-2 flex items-center justify-between text-xs">
-                        <span className="text-gold-400 font-medium tracking-wider uppercase opacity-80">{product.category}</span>
+                {/* Content Section - Adjusted padding and text sizes */}
+                <div className="p-3 md:p-5 flex-1 flex flex-col gap-1 md:gap-2">
+                    <div className="flex items-center justify-between text-[10px] md:text-xs">
+                        <span className="text-gold-400 font-medium tracking-wider uppercase opacity-80 truncate max-w-[60%]">{product.category}</span>
                         <div className="flex items-center gap-1 text-chocolate-200">
                             <Star className="w-3 h-3 fill-gold-500 text-gold-500" />
                             <span>{product.rating || 0}</span>
                         </div>
                     </div>
 
-                    <Link href={`/product/${product._id}`} className="group-hover:text-gold-400 transition-colors duration-300 mb-3">
-                        <h3 className="font-serif text-lg font-medium text-white leading-snug line-clamp-2">
+                    <Link href={`/product/${product._id}`} className="group-hover:text-gold-400 transition-colors duration-300 mb-1 md:mb-3">
+                        <h3 className="font-serif text-base md:text-lg font-medium text-white leading-snug line-clamp-2">
                             {product.name}
                         </h3>
                     </Link>
 
-                    <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-                        <span className="text-xl font-serif text-white">
-                            ₹{product.price.toLocaleString()}
-                        </span>
+                    <div className="mt-auto pt-2 md:pt-4 border-t border-white/5 flex items-end justify-between gap-2">
+                        <div className="flex flex-col">
+                            {product.originalPrice && product.originalPrice > product.price && (
+                                <span className="text-[10px] md:text-xs text-chocolate-400 line-through leading-none">
+                                    ₹{product.originalPrice.toLocaleString()}
+                                </span>
+                            )}
+                            <span className="text-lg md:text-xl font-serif text-white leading-none mt-0.5">
+                                ₹{product.price.toLocaleString()}
+                            </span>
+                        </div>
 
                         {product.countInStock === 0 ? (
-                            <span className="text-xs font-bold text-red-400 uppercase tracking-wider">
+                            <span className="text-[10px] md:text-xs font-bold text-red-400 uppercase tracking-wider mb-1">
                                 Sold Out
                             </span>
                         ) : (
                             <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={() => onAddToCart({ ...product, qty: 1 }, 1)}
-                                className="bg-white/10 text-white hover:bg-gold-500 hover:text-chocolate-950 transition-all duration-300 rounded-lg px-4 h-9"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onAddToCart({ ...product, qty: 1 }, 1);
+                                }}
+                                className="bg-white/10 text-white hover:bg-gold-500 hover:text-chocolate-950 transition-all duration-300 rounded-lg px-3 h-8 md:px-4 md:h-9 text-xs md:text-sm"
                             >
-                                <ShoppingBag className="w-4 h-4 mr-2" />
+                                <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5" />
                                 Add
                             </Button>
                         )}
