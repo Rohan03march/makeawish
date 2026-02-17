@@ -1,7 +1,7 @@
 import * as React from "react"
 import { ProductCard } from "@/components/ProductCard"
 import { Button } from "@/components/ui/button"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, ChevronLeft } from "lucide-react"
 
 interface ProductSwimlaneProps {
     title: string
@@ -25,10 +25,20 @@ export function ProductSwimlane({
 }: ProductSwimlaneProps) {
     const scrollContainerRef = React.useRef<HTMLDivElement>(null)
 
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = 320; // Approximately one card width
+            scrollContainerRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            })
+        }
+    }
+
     if (!products || products.length === 0) return null
 
     return (
-        <section id={id} className="py-8 scroll-mt-24 border-b border-white/5 last:border-0">
+        <section id={id} className="py-8 scroll-mt-24 border-b border-white/5 last:border-0 relative group/section">
             <div className="flex items-center justify-between mb-6 px-4 md:px-0">
                 <div className="flex items-center gap-3">
                     <div className="h-8 w-1 bg-gold-500 rounded-full" />
@@ -36,20 +46,42 @@ export function ProductSwimlane({
                         {title}
                     </h2>
                 </div>
-                {onViewAll && (
-                    <Button
-                        variant="ghost"
-                        onClick={onViewAll}
-                        className="text-gold-400 hover:text-white hover:bg-white/5 gap-2 text-sm font-medium tracking-wide uppercase transition-colors"
-                    >
-                        See All <ChevronRight className="w-4 h-4" />
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {/* Desktop Navigation Arrows */}
+                    <div className="hidden md:flex items-center gap-1 mr-4">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => scroll('left')}
+                            className="h-8 w-8 rounded-full border-white/10 bg-white/5 hover:bg-gold-500 hover:text-chocolate-950 hover:border-gold-500 transition-all"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => scroll('right')}
+                            className="h-8 w-8 rounded-full border-white/10 bg-white/5 hover:bg-gold-500 hover:text-chocolate-950 hover:border-gold-500 transition-all"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    {onViewAll && (
+                        <Button
+                            variant="ghost"
+                            onClick={onViewAll}
+                            className="text-gold-400 hover:text-white hover:bg-white/5 gap-2 text-sm font-medium tracking-wide uppercase transition-colors"
+                        >
+                            See All <ChevronRight className="w-4 h-4" />
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <div
                 ref={scrollContainerRef}
-                className="flex overflow-x-auto gap-4 px-4 md:px-0 pb-8 snap-x snap-mandatory no-scrollbar md:gap-6 -mx-4 md:mx-0"
+                className="flex overflow-x-auto gap-4 px-4 md:px-0 pt-8 pb-8 snap-x snap-mandatory no-scrollbar md:gap-6 -mx-4 md:mx-0 scroll-smooth"
                 style={{ scrollPaddingLeft: '1rem', scrollPaddingRight: '1rem' }}
             >
                 {products.slice(0, 10).map((product) => (
