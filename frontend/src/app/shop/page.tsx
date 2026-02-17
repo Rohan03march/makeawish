@@ -1,33 +1,19 @@
 "use client"
 
 import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
-import { ChevronDown } from "lucide-react"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { ProductCard } from "@/components/ProductCard" // Import ProductCard
 import { useCart } from "@/context/CartContext"
-import Image from "next/image"
 import { API_URL } from "@/lib/config"
-
-// Mock Data removed
-// Real data fetching logic will be added inside the component
-
+import { ProductSwimlane } from "@/components/Shop/ProductSwimlane"
+import { ProductCard } from "@/components/ProductCard"
+import { toast } from "react-hot-toast"
+import { cn } from "@/lib/utils"
 
 export default function ShopPage() {
     const [products, setProducts] = React.useState<any[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
-    const { addToCart } = useCart() // Updated to addToCart to match context
-    const [selectedCategory, setSelectedCategory] = React.useState("All")
-    const [sortOption, setSortOption] = React.useState("featured")
-
+    const { addToCart } = useCart()
     const [favoriteIds, setFavoriteIds] = React.useState<string[]>([])
+    const [activeSection, setActiveSection] = React.useState("Overview")
 
     React.useEffect(() => {
         const fetchProducts = async () => {
@@ -55,7 +41,6 @@ export default function ShopPage() {
                 })
                 if (res.ok) {
                     const data = await res.json()
-                    // Store only IDs
                     setFavoriteIds(data.map((item: any) => item._id || item))
                 }
             } catch (error) {
@@ -68,12 +53,12 @@ export default function ShopPage() {
     }, [])
 
     const toggleFavorite = async (e: React.MouseEvent, productId: string) => {
-        e.preventDefault() // Prevent navigation
+        e.preventDefault()
         e.stopPropagation()
 
         const userInfo = localStorage.getItem('userInfo')
         if (!userInfo) {
-            alert("Please login to manage favorites")
+            toast.error("Please login to manage favorites")
             return
         }
 
@@ -90,114 +75,138 @@ export default function ShopPage() {
                         ? prev.filter(id => id !== productId)
                         : [...prev, productId]
                 )
+                toast.success(favoriteIds.includes(productId) ? "Removed from favorites" : "Added to favorites")
             }
         } catch (error) {
             console.error("Error toggling favorite:", error)
         }
     }
 
-    const filteredProducts = React.useMemo(() => {
-        let result = selectedCategory === "All"
-            ? [...products]
-            : products.filter(p => p.category === selectedCategory || (selectedCategory === "Gifts" && p.category === "Gifts"))
+    const sections = React.useMemo(() => {
+        if (!products.length) return []
 
-        switch (sortOption) {
-            case "price-asc":
-                result.sort((a, b) => a.price - b.price)
-                break
-            case "price-desc":
-                result.sort((a, b) => b.price - a.price)
-                break
-            case "newest":
-                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                break
-            case "featured":
-            default:
-                // Featured could be bestseller first, or just default order
-                result.sort((a, b) => (b.isBestseller === a.isBestseller) ? 0 : b.isBestseller ? 1 : -1)
-                break
+        const bestsellers = products.filter(p => p.isBestseller)
+        const newArrivals = [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 20)
+
+        // Group remaining by category
+        const categories = Array.from(new Set(products.map(p => p.category)))
+        const categorySections = categories.map(cat => ({
+            id: cat,
+            title: cat,
+            products: products.filter(p => p.category === cat)
+        }))
+
+        return [
+            { id: "Bestsellers", title: "Bestsellers", products: bestsellers },
+            { id: "New Arrivals", title: "New Arrivals", products: newArrivals },
+            ...categorySections
+        ].filter(section => section.products.length > 0)
+    }, [products])
+
+    const scrollToSection = (id: string) => {
+        setActiveSection(id)
+        if (id === "Overview") {
+            window.scrollTo({ top: 0, behavior: "smooth" })
         }
-        return result
-    }, [products, selectedCategory, sortOption])
+    }
+
+    // Filter products based on active section for the grid view
+    const displayedProducts = React.useMemo(() => {
+        if (activeSection === "Overview") return []
+        const section = sections.find(s => s.id === activeSection)
+        return section ? section.products : []
+    }, [activeSection, sections])
 
     return (
-        <div className="min-h-screen bg-chocolate-950/95">
-            <div className="container mx-auto px-4 md:px-6 py-12">
-                {/* Page Header */}
-                <div className="text-center mb-16 space-y-4">
-                    <h1 className="text-5xl md:text-6xl font-serif font-bold text-white mb-2">Our Collection</h1>
+        <div className="min-h-screen bg-chocolate-950">
+            {/* Header */}
+            <div className="relative pt-24 pb-12 px-4 md:px-6 bg-gradient-to-b from-chocolate-900 to-chocolate-950">
+                <div className="container mx-auto text-center space-y-4">
+                    <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-2">Our Collection</h1>
                     <div className="w-24 h-1 bg-gold-500 mx-auto" />
                     <p className="text-chocolate-200 text-lg max-w-2xl mx-auto">
-                        Explore our range of award-winning chocolates, handcrafted with passion and precision.
+                        Discover our curated selection of fine chocolates and gifts.
                     </p>
                 </div>
+            </div>
 
-                <div className="flex flex-col gap-8">
-                    {isLoading && (
-                        <div className="w-full flex justify-center py-20">
-                            <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
+            {/* Sticky Navigation */}
+            <div className="sticky top-[72px] z-40 bg-chocolate-950/95 backdrop-blur-md border-b border-white/5 py-4 shadow-lg mb-4">
+                <div className="container mx-auto px-4 md:px-6 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => scrollToSection("Overview")}
+                            className={cn(
+                                "px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap",
+                                activeSection === "Overview"
+                                    ? "bg-gold-500 text-chocolate-950 font-bold shadow-gold-500/20 shadow-lg"
+                                    : "bg-white/5 text-chocolate-200 hover:bg-white/10 hover:text-white border border-white/5"
+                            )}
+                        >
+                            Overview
+                        </button>
+                        {sections.map((section) => (
+                            <button
+                                key={section.id}
+                                onClick={() => scrollToSection(section.id)}
+                                className={cn(
+                                    "px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap",
+                                    activeSection === section.id
+                                        ? "bg-gold-500 text-chocolate-950 font-bold shadow-gold-500/20 shadow-lg"
+                                        : "bg-white/5 text-chocolate-200 hover:bg-white/10 hover:text-white border border-white/5"
+                                )}
+                            >
+                                {section.title}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="container mx-auto pb-20 space-y-4 px-4 md:px-6">
+                {isLoading ? (
+                    <div className="w-full flex justify-center py-20">
+                        <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    activeSection === "Overview" ? (
+                        // Overview Mode: Swimlanes
+                        sections.map((section) => (
+                            <ProductSwimlane
+                                key={section.id}
+                                id={section.id}
+                                title={section.title}
+                                products={section.products}
+                                favoriteIds={favoriteIds}
+                                onToggleFavorite={toggleFavorite}
+                                onAddToCart={addToCart}
+                                onViewAll={section.products.length > 10 ? () => scrollToSection(section.id) : undefined}
+                            />
+                        ))
+                    ) : (
+                        // Category Grid View
+                        <div className="animate-fade-in-up">
+                            <div className="flex items-center justify-between mb-8">
+                                <h2 className="text-3xl md:text-4xl font-serif font-bold text-white">{activeSection}</h2>
+                                <span className="text-chocolate-300">{displayedProducts.length} Products</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {displayedProducts.map(product => (
+                                    <div key={product._id} className="h-full">
+                                        <ProductCard
+                                            product={product}
+                                            isFavorite={favoriteIds.includes(product._id)}
+                                            onToggleFavorite={toggleFavorite}
+                                            onAddToCart={addToCart}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    )}
-
-                    {!isLoading && (
-                        <>
-
-                            {/* Filter & Sort Toolbar */}
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-chocolate-900/40 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
-                                {/* Categories */}
-                                <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-4 md:pb-0 no-scrollbar mask-gradient-right px-1">
-                                    {['All', 'Chocolates', 'Bars', 'Gifts', 'Seasonal'].map((cat) => (
-                                        <button
-                                            key={cat}
-                                            onClick={() => setSelectedCategory(cat)}
-                                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap mb-1 ${selectedCategory === cat
-                                                ? 'bg-gold-500 text-chocolate-950 font-bold scale-105'
-                                                : 'bg-chocolate-800/30 text-chocolate-200 border border-white/10 hover:border-gold-500/50 hover:text-white hover:bg-chocolate-800/80'
-                                                }`}
-                                        >
-                                            {cat}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Sort By */}
-                                <div className="flex items-center gap-3 w-full md:w-auto min-w-[200px]">
-                                    <span className="text-sm text-chocolate-300 whitespace-nowrap hidden md:inline">Sort by:</span>
-                                    <Select value={sortOption} onValueChange={setSortOption}>
-                                        <SelectTrigger className="w-full md:w-[180px] bg-chocolate-800/50 border-white/10 text-white focus:ring-gold-500/50">
-                                            <SelectValue placeholder="Sort by" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-chocolate-900 border-white/10 text-white">
-                                            <SelectItem value="featured" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Featured</SelectItem>
-                                            <SelectItem value="price-asc" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Price: Low to High</SelectItem>
-                                            <SelectItem value="price-desc" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Price: High to Low</SelectItem>
-                                            <SelectItem value="newest" className="focus:bg-gold-500 focus:text-chocolate-950 cursor-pointer">Newest Arrivals</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* Product Grid */}
-                            <div className="flex-1">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-                                    {filteredProducts.map((product) => (
-                                        <div key={product._id} className="h-full">
-                                            <ProductCard
-                                                product={product}
-                                                isFavorite={favoriteIds.includes(product._id)}
-                                                onToggleFavorite={toggleFavorite}
-                                                onAddToCart={addToCart}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-
-                </div >
-            </div >
-        </div >
+                    )
+                )}
+            </div>
+        </div>
     )
 }
