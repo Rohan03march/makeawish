@@ -9,6 +9,8 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { API_URL } from "@/lib/config"
 
+import { toast } from "react-hot-toast"
+
 export default function ProductPage() {
     const params = useParams()
     const { addToCart } = useCart()
@@ -20,6 +22,27 @@ export default function ProductPage() {
     const [isFavorite, setIsFavorite] = React.useState(false)
 
     const [isDescriptionExpanded, setIsDescriptionExpanded] = React.useState(false)
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: product.name,
+                    text: `Check out this amazing product: ${product.name}`,
+                    url: window.location.href,
+                })
+            } catch (error) {
+                console.error('Error sharing:', error)
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(window.location.href)
+                toast.success('Link copied to clipboard!')
+            } catch (err) {
+                toast.error('Failed to copy link')
+            }
+        }
+    }
 
     React.useEffect(() => {
         const fetchProduct = async () => {
@@ -83,6 +106,7 @@ export default function ProductPage() {
 
             if (res.ok) {
                 setIsFavorite(!isFavorite)
+                toast.success(isFavorite ? "Removed from favorites" : "Added to favorites")
             }
         } catch (error) {
             console.error("Error toggling favorite:", error)
@@ -92,6 +116,7 @@ export default function ProductPage() {
     const handleAddToCart = () => {
         if (product) {
             addToCart({ ...product, qty: quantity }, quantity)
+            toast.success("Added to cart")
         }
     }
 
@@ -142,7 +167,12 @@ export default function ProductPage() {
                                 >
                                     <Heart className={`h-6 w-6 ${isFavorite ? 'fill-current' : ''}`} />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="rounded-full bg-white/10 hover:bg-gold-500 hover:text-chocolate-950 backdrop-blur-md transition-all">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleShare}
+                                    className="rounded-full bg-white/10 hover:bg-gold-500 hover:text-chocolate-950 backdrop-blur-md transition-all"
+                                >
                                     <Share2 className="h-6 w-6" />
                                 </Button>
                             </div>
@@ -175,7 +205,9 @@ export default function ProductPage() {
                             <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 leading-tight">{product.name}</h1>
                             <div className="flex items-baseline gap-4">
                                 <p className="text-4xl font-light text-gold-500">₹{product.price.toLocaleString()}</p>
-                                <span className="text-chocolate-400 line-through text-lg">₹3,000</span>
+                                {product.originalPrice > product.price && (
+                                    <span className="text-chocolate-400 line-through text-lg">₹{product.originalPrice.toLocaleString()}</span>
+                                )}
                             </div>
                         </div>
 

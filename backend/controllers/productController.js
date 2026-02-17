@@ -52,11 +52,12 @@ const deleteProduct = async (req, res) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
     try {
-        const { name, price, description, image, category, countInStock, rating, ingredients, images, isBestseller } = req.body;
+        const { name, price, originalPrice, description, image, category, countInStock, rating, ingredients, images, isBestseller } = req.body;
 
         const product = new Product({
             name: name || 'Sample Name',
             price: price || 0,
+            originalPrice: originalPrice || 0,
             user: req.user._id,
             image: image || '/images/sample.jpg', // Keep main image for backward compatibility
             images: images || [image] || ['/images/sample.jpg'], // Use provided images or fallback to main image
@@ -80,18 +81,19 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
-    const { name, price, description, image, category, countInStock, isBestseller } = req.body;
+    const { name, price, originalPrice, description, image, category, countInStock, isBestseller } = req.body;
 
     try {
         const product = await Product.findById(req.params.id);
 
         if (product) {
             product.name = name || product.name;
-            product.price = price || product.price;
+            product.price = price !== undefined ? price : product.price;
+            product.originalPrice = originalPrice !== undefined ? originalPrice : product.originalPrice;
             product.description = description || product.description;
             product.image = image || product.image;
             product.category = category || product.category;
-            product.countInStock = countInStock || product.countInStock;
+            product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
             if (req.body.rating !== undefined) product.rating = req.body.rating;
             if (req.body.isBestseller !== undefined) product.isBestseller = req.body.isBestseller;
             if (req.body.ingredients !== undefined) product.ingredients = req.body.ingredients;
